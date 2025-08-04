@@ -1,0 +1,69 @@
+services:
+
+  postgresql:
+    container_name: ws_postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: webstore
+      POSTGRES_PASSWORD: webstore
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5433:5432"  # host \ container
+    networks:
+        - ms-webstore
+    restart: unless-stopped
+
+  pgadmin:
+    container_name: ws_pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - ms-webstore
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo
+    container_name: ws_mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo:/data
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=webstore
+      - MONGO_INITDB_ROOT_PASSWORD=webstore
+
+  mongo-express:
+    image: mongo-express
+    container_name: ws_mongo_express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=webstore
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=webstore
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+
+  mail-dev:
+    container_name: ws_mail_dev
+    image: maildev/maildev
+    ports:
+      - 1080:1080
+      - 1025:1025
+
+networks:
+  ms-webstore:
+    driver: bridge
+
+volumes:
+  postgres:
+  pgadmin:
+  mongo:
