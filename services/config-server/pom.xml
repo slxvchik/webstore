@@ -11,8 +11,8 @@
 	<groupId>com.webstore</groupId>
 	<artifactId>config-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>config-server</name>
-	<description>config-server</description>
+	<name>config</name>
+	<description>config server</description>
 	<url/>
 	<licenses>
 		<license/>
