@@ -83,4 +83,13 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(orderRequest.status());
         orderRepository.save(order);
     }
+
+    @Override
+    public Long isOrderOwner(Long orderId) {
+        return orderRepository.findById(orderId)
+                .map(Order::getUserId)
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Order with id: " + orderId + " not found")
+                );
+    }
 }

@@ -11,4 +11,5 @@ public interface OrderService {
     OrderResponse findOrderById(Long orderId);
     List<OrderResponse> findOrderByUserId(Long userId);
     void updateOrderStatus(OrderRequest orderRequest);
+    Long isOrderOwner(Long orderId);
 }

@@ -8,7 +8,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
@@ -42,5 +42,5 @@ logging:
 
 application:
   config:
-    users-url: http://localhost:8222/api/v1/users
-    product-url: http://localhost:8222/api/v1/products
+    users-url: http://localhost:8010/api/v1/users
+    product-url: http://localhost:8020/api/v1/products

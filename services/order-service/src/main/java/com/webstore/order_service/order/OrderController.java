@@ -4,8 +4,13 @@ import com.webstore.order_service.order.dto.OrderRequest;
 import com.webstore.order_service.order.dto.OrderResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -16,20 +21,47 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    @GetMapping("/{order-id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
+    @GetMapping("/user/all")
+    public ResponseEntity<List<OrderResponse>> findAllByAuthUserId(
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseEntity.ok(orderService.findOrderByUserId(userId));
+    }
+
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
+    @GetMapping("/user/{order-id}")
     public ResponseEntity<OrderResponse> findById(
-            @PathVariable("order-id") Long orderId
+            @PathVariable("order-id") Long orderId,
+            Authentication authentication
     ) {
-        return ResponseEntity.ok(orderService.findOrderById(orderId));
+
+        Long userId = (Long) authentication.getPrincipal();
+
+        var orderResponse = orderService.findOrderById(orderId);
+
+        if (authentication.getAuthorities().stream()
+                .noneMatch(authority ->
+                        authority.getAuthority().equals("ADMIN") ||
+                        authority.getAuthority().equals("PRODUCT_MANAGER")
+                )
+                && !userId.equals(orderResponse.userId())) {
+
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        return ResponseEntity.ok(orderResponse);
     }
 
-    @GetMapping("/user/{user-id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
+    @GetMapping("/user/{user-id}/all")
     public ResponseEntity<List<OrderResponse>> findAllByUser(
-            @PathVariable("user-id") Long orderId
+            @PathVariable("user-id") Long userId
     ) {
-        return ResponseEntity.ok(orderService.findOrderByUserId(orderId));
+        return ResponseEntity.ok(orderService.findOrderByUserId(userId));
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @PutMapping
     public ResponseEntity<Void> updateStatus(
             @RequestBody @Valid OrderRequest orderRequest

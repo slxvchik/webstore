@@ -8,7 +8,7 @@ import com.webstore.order_service.kafka.OrderConfirmation;
 import com.webstore.order_service.order.OrderStatus;
 import com.webstore.order_service.product.ProductClient;
 import com.webstore.order_service.product.dto.ProductPurchaseItem;
-import com.webstore.order_service.user.UserClient;
+//import com.webstore.order_service.user.UserClient;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -27,7 +27,7 @@ public class CartServiceImpl implements CartService {
     private final CartMapper cartMapper;
 
     private final ProductClient productClient;
-    private final UserClient userClient;
+//    private final UserClient userClient;
 
     private final OrderProducer orderProducer;
 
@@ -62,9 +62,9 @@ public class CartServiceImpl implements CartService {
         // var user = userClient.findUserById(request.userId())
         //         .orElseThrow(() -> new EntityNotFoundException("User with ID: " + request.userId() + " not found"));
 
-        if (!userClient.userExists(request.userId())) {
-            throw new EntityNotFoundException("User with ID: " + request.userId() + " not found");
-        }
+//        if (!userClient.userExists(request.userId())) {
+//            throw new EntityNotFoundException("User with ID: " + request.userId() + " not found");
+//        }
 
         var product = productClient.findProductById(request.productId());
 
@@ -80,9 +80,9 @@ public class CartServiceImpl implements CartService {
     @Override
     public void updateCart(CartRequest request) {
 
-        if (userClient.userExists(request.userId())) {
-            throw new EntityNotFoundException("User with ID: " + request.userId() + " not found");
-        }
+//        if (userClient.userExists(request.userId())) {
+//            throw new EntityNotFoundException("User with ID: " + request.userId() + " not found");
+//        }
 
         if (!productClient.productExists(request.productId())) {
             throw new EntityNotFoundException("Product with ID: " + request.productId() + " not found");

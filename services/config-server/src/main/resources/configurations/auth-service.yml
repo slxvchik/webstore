@@ -1,0 +1,27 @@
+spring:
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5433/users
+    username: webstore
+    password: webstore
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8010
+
+jwt:
+  secret: VGhpcyBpcyBhIHNlY3JldCE
+  accessExpiration: 300000 # 5 minutes
+  refreshExpiration: 604800000 # 7 days
+
+#springdoc:
+#  swagger-ui:
+#    path: /swagger-ui.html
+#  api-docs:
+#    path: /v3/api-docs

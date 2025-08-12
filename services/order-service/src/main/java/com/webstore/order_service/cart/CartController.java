@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,11 +18,14 @@ public class CartController {
 
     private final CartService cartService;
 
+    // for admins
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping
     public ResponseEntity<List<CartResponse>> findAll() {
         return ResponseEntity.ok(cartService.findAllCarts());
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
     @PostMapping
     public ResponseEntity<Long> createCart(
             @RequestBody @Valid CartRequest request
@@ -29,6 +33,7 @@ public class CartController {
         return ResponseEntity.status(HttpStatus.CREATED).body(cartService.createCart(request));
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
     @PutMapping
     public ResponseEntity<Void> updateCart(
             @RequestBody @Valid CartRequest request
@@ -37,6 +42,7 @@ public class CartController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
     @DeleteMapping("/{cart-id}")
     public ResponseEntity<Void> deleteCart(
             @PathVariable("cart-id") Long cartId
@@ -45,6 +51,7 @@ public class CartController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
     @GetMapping("/{cart-id}")
     public ResponseEntity<CartResponse> findCart(
             @PathVariable("cart-id") Long cartId
@@ -52,6 +59,8 @@ public class CartController {
         return ResponseEntity.ok(cartService.findCartById(cartId));
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')" +
+            "or (hasAuthority('USER') and #userId == authentication.principal)")
     @GetMapping("/user/{user-id}")
     public ResponseEntity<List<CartResponse>> findUserCarts(
             @PathVariable("user-id") Long userId
@@ -59,6 +68,8 @@ public class CartController {
         return ResponseEntity.ok(cartService.findUserCartByUserId(userId));
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')" +
+            "or (hasAuthority('USER') and #userId == authentication.principal)")
     @PostMapping("/user/{user-id}")
     public ResponseEntity<Void> purchaseCart(
             @PathVariable("user-id") Long userId
