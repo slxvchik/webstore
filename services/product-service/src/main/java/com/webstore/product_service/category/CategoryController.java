@@ -5,6 +5,7 @@ import com.webstore.product_service.category.dto.CategoryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,11 +17,13 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> findAll() {
         return ResponseEntity.ok(categoryService.findAll());
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @PostMapping
     public ResponseEntity<Long> create(
             @RequestBody CategoryRequest request
@@ -28,6 +31,7 @@ public class CategoryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.createProduct(request));
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @PutMapping
     public ResponseEntity<Void> updateCategory(
             @RequestBody CategoryRequest request
@@ -43,6 +47,7 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.findCategoryById(categoryId));
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @DeleteMapping("/{category-id}")
     public ResponseEntity<Void> deleteCategory(
             @PathVariable("category-id") Long categoryId

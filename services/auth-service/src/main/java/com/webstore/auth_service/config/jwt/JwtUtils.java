@@ -32,10 +32,14 @@ public class JwtUtils {
 
     public String createAccessToken(User user) {
 
+        Set<String> userRoles = user.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toSet());
+
         return Jwts.builder()
                 .id(UUID.randomUUID().toString())
                 .subject(user.getUsername())
-                .claim("authorities", user.getAuthorities())
+                .claim("authorities", userRoles)
                 .claim("userId", user.getId())
                 .issuedAt(Date.from(Instant.now()))
                 .expiration(Date.from(Instant.now().plusSeconds(ACCESS_EXPIRATION)))
@@ -43,26 +47,29 @@ public class JwtUtils {
                 .compact();
     }
 
-    public String createRefreshToken(User user, String csrfToken) {
+    public String createRefreshToken(User user) {
 
         return Jwts.builder()
                 .id(UUID.randomUUID().toString())
                 .subject(user.getUsername())
                 .claim("userId", user.getId())
-                .claim("X-CSRF-TOKEN", csrfToken)
                 .issuedAt(Date.from(Instant.now()))
                 .expiration(Date.from(Instant.now().plusSeconds(REFRESH_EXPIRATION)))
                 .signWith(getSigningKey())
                 .compact();
     }
 
-    public Optional<Claims> extractAllClaims(String token) {
+    public Optional<ParsedToken> extractAllClaims(String token) {
         try {
-            return Optional.ofNullable(Jwts.parser()
+            Claims parsedTokenClaims = Jwts.parser()
                     .verifyWith(getSigningKey())
                     .build()
                     .parseSignedClaims(token)
-                    .getPayload());
+                    .getPayload();
+
+            return Optional.of(
+                    new ParsedToken(parsedTokenClaims)
+            );
         } catch (Exception e) {
             log.error("JWT extract claims error -> Message: ", e);
         }

@@ -3,8 +3,6 @@ package com.webstore.auth_service.config.jwt;
 import com.webstore.auth_service.user.Role;
 import com.webstore.auth_service.user.User;
 import io.jsonwebtoken.Claims;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,12 +16,8 @@ public class ParsedToken {
         this.claims = claims;
     }
 
-    public String getCsrfToken() {
-        return claims.get("X-CSRF-TOKEN", String.class);
-    }
-
-    public String getUsername() {
-        return claims.getSubject();
+    public Long getUserId() {
+        return claims.get("userId", Long.class);
     }
 
     public User getUser() {

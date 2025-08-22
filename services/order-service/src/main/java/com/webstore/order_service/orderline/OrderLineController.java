@@ -18,11 +18,11 @@ public class OrderLineController {
 
     private final OrderLineService orderLineService;
 
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
-    @GetMapping("/order/{order-id}")
-    public ResponseEntity<List<OrderLineResponse>> findByOrderId(
-            @PathVariable("order-id") Long orderId
-    ) {
-        return ResponseEntity.ok(orderLineService.findAllByOrderId(orderId));
-    }
+//    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
+//    @GetMapping("/order/{order-id}")
+//    public ResponseEntity<List<OrderLineResponse>> findByOrderId(
+//            @PathVariable("order-id") Long orderId
+//    ) {
+//        return ResponseEntity.ok(orderLineService.findAllByOrderId(orderId));
+//    }
 }

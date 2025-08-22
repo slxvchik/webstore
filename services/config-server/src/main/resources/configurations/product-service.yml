@@ -22,3 +22,6 @@ spring:
 
 server:
   port: 8020
+
+jwt:
+  secret: gqi0TQmTCBWt9273UBrDBfKRjy57Y9UABNWAwtv5hocrGiSzI6fHqz7dfYelhhUKyoiAaYj/S8Csp2hQf2ugBQ==

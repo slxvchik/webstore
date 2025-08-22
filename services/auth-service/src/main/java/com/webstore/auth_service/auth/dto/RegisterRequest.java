@@ -1,15 +1,8 @@
-package com.webstore.auth_service.user.dto;
+package com.webstore.auth_service.auth.dto;
 
-
-import com.webstore.auth_service.user.Role;
 import jakarta.validation.constraints.*;
 
-import java.util.Set;
-
-public record UserRequest (
-        @NotNull
-        Long id,
-
+public record RegisterRequest(
         @NotBlank(message = "Username must not be blank")
         @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
         @Pattern(regexp = "^[a-zA-Z][a-zA-Z0-9_]{4,32}$", message = "The username can only contain letters and underscores")
@@ -30,9 +23,6 @@ public record UserRequest (
 
         @Pattern(regexp = "^\\+7[0-9]{10}$", message = "The phone number is not in the correct format")
         @Size(min = 12, max = 12, message = "Phone number must be 12 characters")
-        String phone,
-
-        @NotBlank
-        Set<Role> roles
+        String phone
 ) {
 }

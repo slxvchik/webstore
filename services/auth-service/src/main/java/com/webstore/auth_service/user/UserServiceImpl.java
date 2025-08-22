@@ -2,11 +2,10 @@ package com.webstore.auth_service.user;
 
 import com.webstore.auth_service.exception.UserNotFoundException;
 import com.webstore.auth_service.exception.UserValidateException;
-import com.webstore.auth_service.user.dto.UserRequest;
-import com.webstore.auth_service.user.dto.UserResponse;
-import jakarta.transaction.Transactional;
+import com.webstore.auth_service.user.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,21 +18,19 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepo;
     private final UserMapper userMapper;
-
-    @Transactional
-    @Override
-    public Long createUser(UserRequest request) {
-        var user = userMapper.toUser(request);
-        validateUserUniques(user);
-        return userRepo.save(user).getId();
-    }
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void updateUser(UserRequest request) {
         User user = userRepo.findById(request.id())
                 .orElseThrow(() -> new UserNotFoundException("User with id " + request.id() + " not found."));
         validateUserUniques(userMapper.toUser(request));
-        mergeUsers(user, request);
+        user.setUsername(request.username());
+        user.setEmail(request.email());
+        user.setPhone(request.phone());
+        if (StringUtils.isNotBlank(request.fullname())) {
+            user.setFullname(request.fullname());
+        }
         userRepo.save(user);
     }
 
@@ -63,17 +60,82 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean userExistsById(Long userId) {
-        return userRepo.existsById(userId);
+    public void updateAuthUser(Long userId, UpdateUserRequest request) {
+        User user = userRepo.findById(userId).orElseThrow(() ->
+                new UserNotFoundException("User with id " + userId + " not found.")
+        );
+
+        user.setFullname(request.fullname());
+        user.setAvatar(request.avatar());
+
+        userRepo.save(user);
     }
 
-    private void mergeUsers(User user, UserRequest userRequest) {
-        user.setUsername(userRequest.username());
-        user.setEmail(userRequest.email());
-        user.setPhone(userRequest.phone());
-        if (StringUtils.isNotBlank(userRequest.fullname())) {
-            user.setFullname(userRequest.fullname());
+    @Override
+    public void updatePassword(Long userId, UpdatePasswordRequest request) {
+        User user = userRepo.findById(userId).orElseThrow(() ->
+                new UserNotFoundException("User with id " + userId + " not found")
+        );
+        if (!passwordEncoder.matches(user.getPassword(), request.oldPassword())) {
+            throw new UserValidateException("Old password does not match");
         }
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepo.save(user);
+    }
+
+    @Override
+    public void updateUsername(Long userId, UpdateUsernameRequest request) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(()-> new UserNotFoundException("User with id " + userId + " not found"));
+        if (!passwordEncoder.matches(user.getPassword(), request.password())) {
+            throw new UserValidateException("Password does not match");
+        }
+        user.setUsername(request.newUsername());
+        userRepo.save(user);
+    }
+
+    @Override
+    public void updateEmail(Long userId, UpdateEmailRequest request) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User with id " + userId + " not found"));
+        if (!passwordEncoder.matches(user.getPassword(), request.password())) {
+            throw new UserValidateException("Password does not match");
+        }
+
+        // todo: create confirmation token for update email
+
+        // todo: kafka create user-email-update-topic
+
+    }
+
+    @Override
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepo.findByEmail(request.email()).orElseThrow(() ->
+                new UserNotFoundException("User with email " + request.email() + " not found.")
+        );
+
+        // todo: create confirmation token for password recovery
+
+        // todo: kafka create user-email-update-topic
+
+    }
+
+    @Override
+    public void recoveryPassword(PasswordRecoveryRequest request, String confirmationToken) {
+
+        // todo: get confirmation token from conf. token repo
+
+        // todo: set new password for user
+
+    }
+
+    @Override
+    public Long createUser(UserRequest request) {
+
+        User user = userMapper.toUser(request);
+        validateUserUniques(user);
+
+        return userRepo.save(user).getId();
     }
 
     private void validateUserUniques(User user) {

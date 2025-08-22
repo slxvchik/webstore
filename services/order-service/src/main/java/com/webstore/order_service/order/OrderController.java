@@ -22,15 +22,16 @@ public class OrderController {
     private final OrderService orderService;
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
-    @GetMapping("/user/all")
+    @GetMapping("/me/all")
     public ResponseEntity<List<OrderResponse>> findAllByAuthUserId(
             @AuthenticationPrincipal Long userId
     ) {
         return ResponseEntity.ok(orderService.findOrderByUserId(userId));
     }
 
+    // include order-lines
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
-    @GetMapping("/user/{order-id}")
+    @GetMapping("/me/{order-id}")
     public ResponseEntity<OrderResponse> findById(
             @PathVariable("order-id") Long orderId,
             Authentication authentication
@@ -40,18 +41,16 @@ public class OrderController {
 
         var orderResponse = orderService.findOrderById(orderId);
 
-        if (authentication.getAuthorities().stream()
-                .noneMatch(authority ->
-                        authority.getAuthority().equals("ADMIN") ||
-                        authority.getAuthority().equals("PRODUCT_MANAGER")
-                )
-                && !userId.equals(orderResponse.userId())) {
-
+        if (!userId.equals(orderResponse.userId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
         return ResponseEntity.ok(orderResponse);
     }
+
+    /***
+     * ==========================ADMIN & PM RIGHTS==========================
+     */
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @GetMapping("/user/{user-id}/all")
@@ -62,7 +61,16 @@ public class OrderController {
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
-    @PutMapping
+    @GetMapping("/{order-id}")
+    public ResponseEntity<OrderResponse> findById(
+            @PathVariable("order-id") Long orderId
+    ) {
+        var orderResponse = orderService.findOrderById(orderId);
+        return ResponseEntity.ok(orderResponse);
+    }
+
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
+    @PutMapping("/{order-id}")
     public ResponseEntity<Void> updateStatus(
             @RequestBody @Valid OrderRequest orderRequest
     ) {

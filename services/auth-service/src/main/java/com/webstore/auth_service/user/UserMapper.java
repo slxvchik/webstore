@@ -4,6 +4,10 @@ import com.webstore.auth_service.user.dto.UserRequest;
 import com.webstore.auth_service.user.dto.UserResponse;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 @Component
 public class UserMapper {
 
@@ -16,7 +20,9 @@ public class UserMapper {
                 .username(request.username())
                 .email(request.email())
                 .fullname(request.fullname())
+                .password(request.password())
                 .phone(request.phone())
+                .roles(new HashSet<>(request.roles()))
                 .build();
     }
 
@@ -29,7 +35,9 @@ public class UserMapper {
             user.getUsername(),
             user.getFullname(),
             user.getEmail(),
-            user.getPhone()
+            user.getPhone(),
+            "",
+            user.getRoles()
         );
     }
 }

@@ -7,10 +7,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class CartMapper {
 
-    public Cart toCart(CartRequest request) {
+    public Cart toCart(Long userId, CartRequest request) {
         return Cart.builder()
                 .id(request.id())
-                .userId(request.userId())
+                .userId(userId)
                 .productId(request.productId())
                 .quantity(request.quantity())
                 .build();

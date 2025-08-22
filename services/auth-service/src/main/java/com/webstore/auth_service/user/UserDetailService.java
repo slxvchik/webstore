@@ -21,6 +21,12 @@ public class UserDetailService implements UserDetailsService {
     }
 
     @Transactional
+    public UserDetails loadUserById(Long id) {
+        return userRepository.findByIdWithAuthorities(id)
+                .orElseThrow(() -> new UsernameNotFoundException("User id does not exist, please try again: " + id));
+    }
+
+    @Transactional
     public UserDetails loadUserByEmail(String email) throws UsernameNotFoundException {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Email does not exist, please try again: " + email));

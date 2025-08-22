@@ -1,31 +1,30 @@
 package com.webstore.auth_service.config.jwt;
 
-import com.webstore.auth_service.security.CsrfTokenGenerator;
 import com.webstore.auth_service.user.User;
-import io.jsonwebtoken.Claims;
+import com.webstore.auth_service.user.UserDetailService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 @AllArgsConstructor
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
     private JwtUtils jwtUtils;
-    private UserDetailsService userDetailsService;
+    private UserDetailService userDetailService;
 
     @Override
     protected void doFilterInternal(
@@ -34,45 +33,39 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        var accessToken = getAccessToken(request);
-        var requiredCookieTokens = extractRequiredCookies(request);
+        var accessTokenStr = getAccessToken(request);
+        var requiredCookie = extractRequiredCookies(request);
 
-        var refreshToken = requiredCookieTokens.get("refresh-token");
-        var csrfToken = requiredCookieTokens.get("X-CSRF-TOKEN");
+        var refreshTokenStr = requiredCookie.get("refresh-token");
 
-        // if refresh token or csrf token is empty -> unauth
-        if (refreshToken == null || csrfToken == null) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "The csrf token or refresh token is missing");
+        // if refresh token is missing -> unauth request
+        if (refreshTokenStr == null) {
+            SecurityContextHolder.clearContext();
+            filterChain.doFilter(request, response);
             return;
         }
 
-        var refreshTokenClaims = jwtUtils.extractAllClaims(refreshToken);
+        Optional<ParsedToken> parsedRefreshToken = jwtUtils.extractAllClaims(refreshTokenStr);
 
-        // refresh token is invalid -> unauth
-        if (refreshTokenClaims.isEmpty()) {
+        // refresh token is invalid -> error
+        if (parsedRefreshToken.isEmpty()) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "The refresh token is invalid");
             return;
         }
 
-        ParsedToken refreshTokenParsed = new ParsedToken(refreshTokenClaims.get());
-
-        // csrf not equals csrf in refresh jwt -> unauth
-        if (!csrfToken.equals(refreshTokenParsed.getCsrfToken())) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "The csrf token in refresh token is not equal to the csrf token");
-            return;
-        }
+        ParsedToken refreshToken = parsedRefreshToken.get();
 
         // access token isset -> try validate token
-        if (accessToken != null) {
+        if (accessTokenStr != null) {
 
-            var accessTokenClaims = jwtUtils.extractAllClaims(accessToken);
+            Optional<ParsedToken> parsedAccessToken = jwtUtils.extractAllClaims(accessTokenStr);
 
             // if access token is valid -> authenticate
-            if (accessTokenClaims.isPresent()) {
+            if (parsedAccessToken.isPresent()) {
 
-                ParsedToken accessTokenParsed = new ParsedToken(accessTokenClaims.get());
+                ParsedToken accessToken = parsedAccessToken.get();
 
-                User user = accessTokenParsed.getUser();
+                User user = accessToken.getUser();
 
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                         user,
@@ -87,9 +80,9 @@ public class JwtFilter extends OncePerRequestFilter {
             }
         }
 
-        // else if access token is invalid, but refresh token and csrf tokens is valid
-        UserDetails userDetails = userDetailsService.loadUserByUsername(
-                refreshTokenParsed.getUsername()
+        // else if access token is invalid, but refresh token is valid
+        UserDetails userDetails = userDetailService.loadUserById(
+                refreshToken.getUserId()
         );
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
@@ -122,7 +115,7 @@ public class JwtFilter extends OncePerRequestFilter {
         Map<String, String> cookies = new HashMap<>();
         for (Cookie cookie : request.getCookies()) {
             String name = cookie.getName();
-            if ("refresh-token".equals(name) || "X-CSRF-TOKEN".equals(name)) {
+            if ("refresh-token".equals(name)) {
                 cookies.put(name, cookie.getValue());
             }
         }

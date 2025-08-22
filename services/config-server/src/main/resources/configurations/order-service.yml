@@ -44,3 +44,6 @@ application:
   config:
     users-url: http://localhost:8010/api/v1/users
     product-url: http://localhost:8020/api/v1/products
+
+jwt:
+  secret: gqi0TQmTCBWt9273UBrDBfKRjy57Y9UABNWAwtv5hocrGiSzI6fHqz7dfYelhhUKyoiAaYj/S8Csp2hQf2ugBQ==

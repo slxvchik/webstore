@@ -1,4 +1,4 @@
-package com.webstore.order_service.config.jwt;
+package com.webstore.product_service.config.Jwt;
 
 import io.jsonwebtoken.Claims;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 public class ParsedToken {
 
     private final Claims claims;
+
 
     public ParsedToken(Claims claims) {
         this.claims = claims;
@@ -24,13 +25,9 @@ public class ParsedToken {
     }
 
     public Set<SimpleGrantedAuthority> getAuthorities() {
-
-        List<String> userRolesList = claims.get("authorities", List.class);
-
-        return userRolesList
-                .stream()
+        List<String> authorities = claims.get("authorities", List.class);
+        return authorities.stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toSet());
     }
-
 }

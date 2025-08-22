@@ -1,10 +1,10 @@
 package com.webstore.order_service.config;
 
-import com.webstore.order_service.config.jwt.JwtAuthenticationFilter;
+import com.webstore.order_service.config.jwt.JwtFilter;
+import com.webstore.order_service.config.jwt.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -19,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtUtils jwtUtils;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -33,11 +33,10 @@ public class SecurityConfig {
                     return corsConfiguration;
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
-//                .authorizeHttpRequests(request -> request
-//                        .requestMatchers(HttpMethod.GET, "/api/v1/carts").hasRole("ADMIN")
-//                        .requestMatchers(HttpMethod.POST, "/api/v1/carts").hasAnyRole("ADMIN")
-//                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/**").authenticated()
+                )
+                .addFilterBefore(new JwtFilter(jwtUtils), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 }

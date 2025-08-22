@@ -57,18 +57,11 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public Long createCart(CartRequest request) {
-
-        // var user = userClient.findUserById(request.userId())
-        //         .orElseThrow(() -> new EntityNotFoundException("User with ID: " + request.userId() + " not found"));
-
-//        if (!userClient.userExists(request.userId())) {
-//            throw new EntityNotFoundException("User with ID: " + request.userId() + " not found");
-//        }
+    public Long createCart(Long userId, CartRequest request) {
 
         var product = productClient.findProductById(request.productId());
 
-        Cart cart = cartMapper.toCart(request);
+        Cart cart = cartMapper.toCart(userId, request);
 
         cart.setProductPrice(product.price());
 
@@ -80,10 +73,6 @@ public class CartServiceImpl implements CartService {
     @Override
     public void updateCart(CartRequest request) {
 
-//        if (userClient.userExists(request.userId())) {
-//            throw new EntityNotFoundException("User with ID: " + request.userId() + " not found");
-//        }
-
         if (!productClient.productExists(request.productId())) {
             throw new EntityNotFoundException("Product with ID: " + request.productId() + " not found");
         }
@@ -93,8 +82,8 @@ public class CartServiceImpl implements CartService {
                 () -> new EntityNotFoundException("Cart with ID: " + request.id() + " not found")
         );
 
-        if (!cart.getProductId().equals(request.productId()) || !cart.getUserId().equals(request.userId())) {
-            throw new BusinessException("It is not possible to change the product and user ID");
+        if (!cart.getProductId().equals(request.productId())) {
+            throw new BusinessException("It is not possible to change the product or user ID");
         }
 
         if (isValidQuantity(request.quantity())) {
@@ -153,6 +142,13 @@ public class CartServiceImpl implements CartService {
 //    )
     public void deleteUserCart(Long userId) {
 //        cartRepository.deleteAllByUserId(userId);
+    }
+
+    @Override
+    public boolean isUserCart(Long userId, Long cartId) {
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new EntityNotFoundException("Cart with ID: " + cartId + " not found"));
+        return cart.getUserId().equals(userId);
     }
 
     private boolean isValidQuantity(int quantity) {
