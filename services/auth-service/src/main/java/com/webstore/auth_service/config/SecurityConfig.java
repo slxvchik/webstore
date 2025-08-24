@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/password/recovery/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                .rememberMe(AbstractHttpConfigurer::disable)
                 .addFilterBefore(new JwtFilter(jwtUtils, userDetailService), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

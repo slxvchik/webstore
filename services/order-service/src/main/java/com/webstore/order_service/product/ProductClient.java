@@ -6,9 +6,14 @@ import com.webstore.order_service.product.dto.ProductPurchaseResponse;
 import com.webstore.order_service.product.dto.ProductShortResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -63,5 +68,28 @@ public class ProductClient {
         }
 
         return purchasedProducts.getBody();
+    }
+
+    public List<ProductShortResponse> findProductsByIds(List<Long> productIds) {
+
+        ResponseEntity<List<ProductShortResponse>> productsResponse = restTemplate.exchange(
+                productUrl + "/search?ids=" +
+                        productIds.stream().map(String::valueOf).collect(Collectors.joining(",")),
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {}
+        );
+
+        if (productsResponse.getStatusCode().isError()) {
+            throw new BusinessException("An error occurred while checking product: " + productsResponse.getStatusCode());
+        }
+
+        var products = productsResponse.getBody();
+
+        if (products == null || products.isEmpty()) {
+            throw new BusinessException("Products not found or response body is null for IDS: " + productIds);
+        }
+
+        return products;
     }
 }

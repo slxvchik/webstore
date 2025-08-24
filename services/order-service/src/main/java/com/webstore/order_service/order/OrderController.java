@@ -3,7 +3,11 @@ package com.webstore.order_service.order;
 import com.webstore.order_service.order.dto.OrderRequest;
 import com.webstore.order_service.order.dto.OrderResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,10 +27,12 @@ public class OrderController {
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
     @GetMapping("/me/all")
-    public ResponseEntity<List<OrderResponse>> findAllByAuthUserId(
+    public ResponseEntity<Page<OrderResponse>> findAllByAuthUserId(
+            @RequestParam(value = "page") @Min(1) Integer page,
             @AuthenticationPrincipal Long userId
     ) {
-        return ResponseEntity.ok(orderService.findOrderByUserId(userId));
+        Pageable pageable = PageRequest.of(page, 10);
+        return ResponseEntity.ok(orderService.findOrderByUserId(userId, pageable));
     }
 
     // include order-lines
@@ -54,10 +60,12 @@ public class OrderController {
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @GetMapping("/user/{user-id}/all")
-    public ResponseEntity<List<OrderResponse>> findAllByUser(
+    public ResponseEntity<Page<OrderResponse>> findAllByUser(
+            @RequestParam(value = "page") @Min(1) Integer page,
             @PathVariable("user-id") Long userId
     ) {
-        return ResponseEntity.ok(orderService.findOrderByUserId(userId));
+        Pageable pageable = PageRequest.of(page, 10);
+        return ResponseEntity.ok(orderService.findOrderByUserId(userId, pageable));
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")

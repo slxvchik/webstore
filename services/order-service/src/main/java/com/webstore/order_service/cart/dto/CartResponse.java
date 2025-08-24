@@ -1,12 +1,10 @@
 package com.webstore.order_service.cart.dto;
 
-import java.math.BigDecimal;
+import com.webstore.order_service.product.dto.ProductShortResponse;
 
 public record CartResponse(
         Long id,
-        Long productId,
-        BigDecimal productPrice,
-        Long userId,
+        ProductShortResponse product,
         Integer quantity
 ) {
 }

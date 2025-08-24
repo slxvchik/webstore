@@ -5,11 +5,9 @@ import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
 
-public record ProductPurchaseItem(
+public record ProductPurchaseItemRequest(
         @NotNull(message = "Product is mandatory")
         Long productId,
-        @Positive(message = "Price must be positive")
-        BigDecimal price,
         @Positive(message = "Quantity must be positive")
         Integer quantity
 ) {

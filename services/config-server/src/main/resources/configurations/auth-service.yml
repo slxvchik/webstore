@@ -17,8 +17,8 @@ server:
 
 jwt:
   secret: gqi0TQmTCBWt9273UBrDBfKRjy57Y9UABNWAwtv5hocrGiSzI6fHqz7dfYelhhUKyoiAaYj/S8Csp2hQf2ugBQ==
-  accessExpiration: 300000 # 5 minutes
-  refreshExpiration: 604800000 # 7 days
+  accessExpiration: 300 # 5 minutes
+  refreshExpiration: 604800 # 7 days
 
 #springdoc:
 #  swagger-ui:

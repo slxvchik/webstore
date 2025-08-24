@@ -10,7 +10,6 @@ public class OrderMapper {
     public Order toOrder(OrderConfirmation orderConfirmation) {
         return Order.builder()
                 .userId(orderConfirmation.userId())
-                .total(orderConfirmation.totalPrice())
                 .status(orderConfirmation.status())
                 .build();
     }

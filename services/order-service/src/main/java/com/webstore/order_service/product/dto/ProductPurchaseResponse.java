@@ -5,6 +5,6 @@ import java.util.List;
 
 public record ProductPurchaseResponse(
         BigDecimal totalPrice,
-        List<ProductPurchaseItem> products
+        List<ProductPurchaseItemResponse> products
 ) {
 }

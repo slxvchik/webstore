@@ -21,7 +21,7 @@ public class ParsedToken {
     }
 
     public Long getUserId() {
-        return (Long) claims.get("userId");
+        return Long.valueOf(String.valueOf(claims.get("userId"))); // todo: beautify
     }
 
     public Set<SimpleGrantedAuthority> getAuthorities() {

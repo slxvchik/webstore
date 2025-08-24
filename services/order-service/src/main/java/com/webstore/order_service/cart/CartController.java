@@ -3,7 +3,12 @@ package com.webstore.order_service.cart;
 import com.webstore.order_service.cart.dto.CartRequest;
 import com.webstore.order_service.cart.dto.CartResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,10 +28,13 @@ public class CartController {
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
     @GetMapping("/me")
-    public ResponseEntity<List<CartResponse>> getMyCarts(
+    public ResponseEntity<Page<CartResponse>> getMyCarts(
+            @RequestParam(value = "page", defaultValue = "1") @Min(1) Integer page,
             @AuthenticationPrincipal Authentication authentication
     ) {
-        List<CartResponse> carts = cartService.findUserCartByUserId((long) authentication.getPrincipal());
+        Pageable pageRequest = PageRequest.of(page, 10, Sort.by(Sort.Direction.DESC, "created"));
+
+        Page<CartResponse> carts = cartService.findUserCartByUserId((long) authentication.getPrincipal(), pageRequest);
         return ResponseEntity.ok(carts);
     }
 
@@ -83,11 +91,14 @@ public class CartController {
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping
-    public ResponseEntity<List<CartResponse>> findAll() {
-        return ResponseEntity.ok(cartService.findAllCarts());
+    public ResponseEntity<Page<CartResponse>> findAll(
+            @RequestParam(value = "page", defaultValue = "1") @Min(1) Integer page
+    ) {
+        Pageable pageRequest = PageRequest.of(page, 10);
+        return ResponseEntity.ok(cartService.findAllCarts(pageRequest));
     }
 
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @DeleteMapping("/{cart-id}")
     public ResponseEntity<Void> deleteCart(
             @PathVariable("cart-id") Long cartId
@@ -96,38 +107,14 @@ public class CartController {
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
-    @GetMapping("/{cart-id}")
-    public ResponseEntity<CartResponse> findCart(
-            @PathVariable("cart-id") Long cartId
-    ) {
-        return ResponseEntity.ok(cartService.findCartById(cartId));
-    }
-
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @GetMapping("/user/{user-id}")
-    public ResponseEntity<List<CartResponse>> findUserCarts(
+    public ResponseEntity<Page<CartResponse>> findUserCarts(
+            @RequestParam(value = "page", defaultValue = "1") @Min(1) Integer page,
             @PathVariable("user-id") Long userId
     ) {
-        return ResponseEntity.ok(cartService.findUserCartByUserId(userId));
-    }
-
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
-    @PostMapping("/user/{user-id}")
-    public ResponseEntity<Long> createCart(
-            @RequestBody @Valid CartRequest request,
-            @PathVariable("user-id") Long userId
-    ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(cartService.createCart(userId, request));
-    }
-
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
-    @PostMapping("/user/{user-id}/purchase")
-    public ResponseEntity<Void> purchaseCart(
-            @PathVariable("user-id") Long userId
-    ) {
-        cartService.purchaseProducts(userId);
-        return ResponseEntity.ok().build();
+        Pageable pageRequest = PageRequest.of(page, 10);
+        return ResponseEntity.ok(cartService.findUserCartByUserId(userId, pageRequest));
     }
 
     // From kafka after order created

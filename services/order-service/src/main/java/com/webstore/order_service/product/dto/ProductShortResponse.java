@@ -7,6 +7,7 @@ public record ProductShortResponse(
         String name,
         BigDecimal price,
         Integer quantity,
+        String thumbnail,
         Float rating,
         Integer reviewsCount
 ) {

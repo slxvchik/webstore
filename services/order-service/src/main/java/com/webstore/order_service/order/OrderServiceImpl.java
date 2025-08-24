@@ -7,8 +7,12 @@ import com.webstore.order_service.orderline.OrderLine;
 import com.webstore.order_service.orderline.OrderLineRepository;
 import com.webstore.order_service.product.ProductClient;
 import com.webstore.order_service.product.dto.ProductPurchaseRequest;
+import com.webstore.order_service.product.dto.ProductPurchaseResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -31,33 +35,33 @@ public class OrderServiceImpl implements OrderService {
     public void handleOrderCreated(OrderConfirmation orderConfirmation) {
 
         // Product service - purchaseProducts (Reduce the quantity)
-        var purchasedProducts = productClient.purchaseProducts(
+        ProductPurchaseResponse purchasedProducts = productClient.purchaseProducts(
                 new ProductPurchaseRequest(
-                    orderConfirmation.totalPrice(),
                     orderConfirmation.products()
                 )
         );
 
         // order and order lines creation
-        var order = orderRepository.save(Order.builder()
+        Order order = orderRepository.save(Order.builder()
                 .userId(orderConfirmation.userId())
                 .status(OrderStatus.CREATED)
                 .total(purchasedProducts.totalPrice())
                 .build());
 
-        var orderLines = purchasedProducts.products().stream().map(product ->
+        List<OrderLine> orderLines = purchasedProducts.products().stream().map(product ->
             OrderLine.builder()
                     .order(order)
                     .productId(product.productId())
-                    .quantity(product.quantity())
                     .pricePerItem(product.price())
+                    .quantity(product.quantity())
                     .build()
         ).toList();
 
         orderLineRepository.saveAll(orderLines);
 
-        // Здесь логика:
-        // 3. Отправить событие "order-confirmed" в kafka
+        // todo:
+        // 3. Отправить событие "order-confirmed" в kafka для удаления корзины
+        // пользователя и отправления уведомления PM's ADMIN's и а также клиенту о покупке
     }
 
     @Override
@@ -68,10 +72,15 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderResponse> findOrderByUserId(Long userId) {
-        return orderRepository.findAllByUserId(userId).stream()
+    public Page<OrderResponse> findOrderByUserId(Long userId, Pageable page) {
+        var orders = orderRepository.findAllByUserId(userId, page).stream()
                 .map(orderMapper::toOrderResponse)
                 .toList();
+        return new PageImpl<>(
+                orders,
+                page,
+                orders.size()
+        );
     }
 
     @Override

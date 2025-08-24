@@ -7,7 +7,6 @@ import jakarta.validation.constraints.*;
 import java.util.Set;
 
 public record UserRequest (
-        @NotNull
         Long id,
 
         @NotBlank(message = "Username must not be blank")
@@ -32,7 +31,7 @@ public record UserRequest (
         @Size(min = 12, max = 12, message = "Phone number must be 12 characters")
         String phone,
 
-        @NotBlank
+        @NotNull
         Set<Role> roles
 ) {
 }

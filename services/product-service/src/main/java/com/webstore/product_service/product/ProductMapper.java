@@ -1,8 +1,8 @@
 package com.webstore.product_service.product;
 
 import com.webstore.product_service.category.Category;
-import com.webstore.product_service.category.CategoryMapper;
-import com.webstore.product_service.product.dto.ProductPurchaseItem;
+import com.webstore.product_service.product.dto.ProductPurchaseItemRequest;
+import com.webstore.product_service.product.dto.ProductPurchaseItemResponse;
 import com.webstore.product_service.product.dto.ProductRequest;
 import com.webstore.product_service.product.dto.ProductShortResponse;
 import lombok.RequiredArgsConstructor;
@@ -11,8 +11,6 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class ProductMapper {
-
-    private final CategoryMapper categoryMapper;
 
     public Product toProduct(ProductRequest productRequest, Category category) {
         return Product.builder()
@@ -31,13 +29,21 @@ public class ProductMapper {
                 product.getName(),
                 product.getPrice(),
                 product.getQuantity(),
+                product.getThumbnail(),
                 product.getRating(),
                 product.getReviewsCount()
         );
     }
 
-    public ProductPurchaseItem toProductPurchaseItem(Product product, Integer quantity) {
-        return new ProductPurchaseItem(
+    public ProductPurchaseItemRequest toProductPurchaseItemRequest(Product product, Integer quantity) {
+        return new ProductPurchaseItemRequest(
+                product.getId(),
+                quantity
+        );
+    }
+
+    public ProductPurchaseItemResponse toProductPurchaseItemResponse(Product product, Integer quantity) {
+        return new ProductPurchaseItemResponse(
                 product.getId(),
                 product.getPrice(),
                 quantity

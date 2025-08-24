@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -132,7 +133,16 @@ public class UserServiceImpl implements UserService {
     @Override
     public Long createUser(UserRequest request) {
 
-        User user = userMapper.toUser(request);
+        User user = User.builder()
+                .id(request.id())
+                .username(request.username())
+                .email(request.email())
+                .fullname(request.fullname())
+                .password(request.password())
+                .phone(request.phone())
+                .roles(request.roles())
+                .build();
+
         validateUserUniques(user);
 
         return userRepo.save(user).getId();

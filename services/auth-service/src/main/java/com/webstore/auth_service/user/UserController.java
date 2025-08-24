@@ -20,7 +20,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USERS')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getAuthUser(
             @AuthenticationPrincipal User user
@@ -101,8 +101,6 @@ public class UserController {
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @GetMapping
     public ResponseEntity<List<UserResponse>> getUsers() {
-        // get all roles
-        log.info("Get users method called - hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')");
         return ResponseEntity.ok(userService.findAllUsers());
     }
 
@@ -111,7 +109,6 @@ public class UserController {
     public ResponseEntity<UserResponse> getUser(
             @PathVariable("user-id") Long userId
     ) {
-        // get all roles
         return ResponseEntity.ok(userService.findUser(userId));
     }
 

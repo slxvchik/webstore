@@ -8,9 +8,13 @@ import com.webstore.product_service.product.dto.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -25,14 +29,6 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
 
     @Override
-    public List<ProductShortResponse> findAllProducts() {
-        return productRepo.findAll()
-                .stream()
-                .map(productMapper::toShortProductResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public Long createProduct(ProductRequest productRequest) {
         Category category = categoryRepo.findById(productRequest.categoryId()).orElseThrow(
                 () -> new EntityNotFoundException("Category with id " + productRequest.categoryId() + " not found")
@@ -41,6 +37,7 @@ public class ProductServiceImpl implements ProductService {
             throw new ProductValidateException("Product with name " + productRequest.name() + " already exists");
         }
         Product product = productMapper.toProduct(productRequest, category);
+        product.setCreated(LocalDateTime.now());
         return productRepo.save(product).getId();
     }
 
@@ -71,13 +68,6 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductShortResponse findProductByName(String name) {
-        return productRepo.findByName(name)
-                .map(productMapper::toShortProductResponse)
-                .orElseThrow(() -> new EntityNotFoundException("Product with name: " + name + " not found."));
-    }
-
-    @Override
     public boolean productExistsById(Long id) {
         return productRepo.existsById(id);
     }
@@ -88,7 +78,7 @@ public class ProductServiceImpl implements ProductService {
 
         // check missed ids
         var productIds = productsRequest.products().stream()
-                .map(ProductPurchaseItem::productId)
+                .map(ProductPurchaseItemRequest::productId)
                 .toList();
         var foundProducts = productRepo.findAllByIdInWithLock(productIds);
 
@@ -115,9 +105,6 @@ public class ProductServiceImpl implements ProductService {
             if (product.getQuantity() - productRequest.quantity() < 0) {
                 errors.add("Insufficient stock quantity for product with ID:" + product.getId() + ".");
             }
-            if (!product.getPrice().equals(productRequest.price())) {
-                errors.add("Incorrect price for product with ID: " + product.getId() + ".");
-            }
             totalPrice = totalPrice.add(product.getPrice());
         }
 
@@ -134,10 +121,17 @@ public class ProductServiceImpl implements ProductService {
             productsRequest.products().stream()
                 .map(req -> {
                     var product = productMap.get(req.productId());
-                    return productMapper.toProductPurchaseItem(product, req.quantity());
+                    return productMapper.toProductPurchaseItemResponse(product, req.quantity());
                 })
                 .toList()
         );
+    }
+
+    @Override
+    public Page<ProductShortResponse> searchProducts(ProductSearchCriteria productSearchCriteria, Pageable productPages) {
+        Specification<Product> spec = ProductSpecification.buildSpecification(productSearchCriteria);
+        Page<Product> products = productRepo.findAll(spec, productPages);
+        return products.map(productMapper::toShortProductResponse);
     }
 
     private void productsMerge(Product product, ProductRequest productRequest, Category newCategory) {

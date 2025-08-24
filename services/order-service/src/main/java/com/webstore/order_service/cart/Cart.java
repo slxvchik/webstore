@@ -22,8 +22,6 @@ public class Cart {
     private Long id;
     @Column(nullable = false, name = "product_id")
     private Long productId;
-    @Column(nullable = false, name = "product_price")
-    private BigDecimal productPrice;
     @Column(nullable = false, name = "user_id")
     private Long userId;
     @Column(nullable = false)

@@ -17,11 +17,14 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> findAll() {
         return ResponseEntity.ok(categoryService.findAll());
     }
+
+    /***
+     * ==========================ADMIN & PM RIGHTS==========================
+     */
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @PostMapping
@@ -40,6 +43,7 @@ public class CategoryController {
         return ResponseEntity.accepted().build();
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @GetMapping("/{category-id}")
     public ResponseEntity<CategoryResponse> findCategory(
             @PathVariable("category-id") Long categoryId
@@ -54,13 +58,6 @@ public class CategoryController {
     ) {
         categoryService.deleteCategory(categoryId);
         return ResponseEntity.accepted().build();
-    }
-
-    @GetMapping("/slug/{category-slug}")
-    public ResponseEntity<CategoryResponse> findCategorySlug(
-            @PathVariable("category-slug") String categorySlug
-    ) {
-        return ResponseEntity.ok(categoryService.findCategoryBySlug(categorySlug));
     }
 
 }

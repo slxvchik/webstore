@@ -32,13 +32,15 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
 
-            log.info("JWT Auth Filter - Gateway Filter");
-
             String accessToken = getAccessToken(exchange.getRequest());
             var refreshTokenCookie = exchange.getRequest().getCookies().getFirst("refresh-token");
 
-            if (accessToken == null || refreshTokenCookie == null) {
-                return  unauthorized(exchange, "Tokens missing");
+            if (accessToken == null && refreshTokenCookie == null) {
+                return chain.filter(exchange);
+            }
+
+            if (accessToken == null) {
+                return unauthorized(exchange, "Access token missing");
             }
 
             return webClientBuilder
@@ -54,9 +56,13 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
                        // add new access token if created;
                         var newAccessToken = clientResponse.headers().asHttpHeaders().getFirst("Authorization");
                         if (newAccessToken != null && !newAccessToken.isEmpty()) {
-                            exchange.getRequest().mutate().header("Authorization", newAccessToken).build();
-                        } else {
-                            return unauthorized(exchange, clientResponse.bodyToMono(String.class).block());
+                            ServerHttpRequest modifiedRequest = exchange.getRequest()
+                                    .mutate()
+                                    .header("Authorization", newAccessToken)
+                                    .build();
+
+                            ServerWebExchange modifiedExchange = exchange.mutate().request(modifiedRequest).build();
+                            return chain.filter(modifiedExchange);
                         }
                         return chain.filter(exchange);
                     });

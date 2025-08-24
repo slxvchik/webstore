@@ -9,6 +9,9 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -33,6 +36,12 @@ public class Product {
     @Column(nullable = false)
     @PositiveOrZero
     private Integer quantity;
+    @Column
+    private String thumbnail;
+    @Column
+    private List<String> images = new ArrayList<>();
+    @Column(nullable = false)
+    private LocalDateTime created;
 
     //aggregated data
     @PositiveOrZero

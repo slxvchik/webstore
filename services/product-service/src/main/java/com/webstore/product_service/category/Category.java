@@ -19,11 +19,8 @@ public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
     @Column(unique = true, nullable = false)
     private String name;
-    @Column(unique = true, nullable = false)
-    private String slug;
     private String description;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)

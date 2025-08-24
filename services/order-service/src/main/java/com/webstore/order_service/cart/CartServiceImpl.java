@@ -7,15 +7,17 @@ import com.webstore.order_service.kafka.OrderProducer;
 import com.webstore.order_service.kafka.OrderConfirmation;
 import com.webstore.order_service.order.OrderStatus;
 import com.webstore.order_service.product.ProductClient;
-import com.webstore.order_service.product.dto.ProductPurchaseItem;
+import com.webstore.order_service.product.dto.ProductPurchaseItemRequest;
+import com.webstore.order_service.product.dto.ProductPurchaseItemResponse;
 //import com.webstore.order_service.user.UserClient;
+import com.webstore.order_service.product.dto.ProductShortResponse;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -27,43 +29,33 @@ public class CartServiceImpl implements CartService {
     private final CartMapper cartMapper;
 
     private final ProductClient productClient;
-//    private final UserClient userClient;
 
     private final OrderProducer orderProducer;
 
     @Override
-    public List<CartResponse> findAllCarts() {
-        return cartRepository.findAll()
-                .stream()
-                .map(cartMapper::toCartResponse)
-                .toList();
+    public Page<CartResponse> findAllCarts(Pageable pageRequest) {
+
+        Page<Cart> cartsPage = cartRepository.findAll(pageRequest);
+
+        List<ProductShortResponse> products = productClient.findProductsByIds(cartsPage.stream().map(Cart::getProductId).toList());
+
+        return cartMapper.toPageableListCartResponse(cartsPage, products);
     }
 
     @Override
-    public CartResponse findCartById(Long cartId) {
-        return cartRepository.findById(cartId)
-                .map(cartMapper::toCartResponse)
-                .orElseThrow(
-                () -> new EntityNotFoundException("Cart with ID: " + cartId + " not found")
-            );
-    }
+    public Page<CartResponse> findUserCartByUserId(Long userId, Pageable pageRequest) {
 
-    @Override
-    public List<CartResponse> findUserCartByUserId(Long userId) {
-        return cartRepository.findAllByUserIdOrderByCreated(userId)
-                .stream()
-                .map(cartMapper::toCartResponse)
-                .toList();
+        Page<Cart> cartsPage = cartRepository.findAllByUserId(userId, pageRequest);
+
+        List<ProductShortResponse> products = productClient.findProductsByIds(cartsPage.stream().map(Cart::getProductId).toList());
+
+        return cartMapper.toPageableListCartResponse(cartsPage, products);
     }
 
     @Override
     public Long createCart(Long userId, CartRequest request) {
 
-        var product = productClient.findProductById(request.productId());
-
         Cart cart = cartMapper.toCart(userId, request);
-
-        cart.setProductPrice(product.price());
 
         var newCart = cartRepository.save(cart);
 
@@ -107,28 +99,19 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public void purchaseProducts(Long userId) {
 
-        var userCart = cartRepository.findAllByUserIdOrderByCreated(userId);
+        var userCart = cartRepository.findAllByUserId(userId);
 
-        // collecting ProductPurchaseRequest - total amount, product id, product quantity
         var productsPurchase = userCart.stream()
-                .map(cart -> new ProductPurchaseItem(
+                .map(cart -> new ProductPurchaseItemRequest(
                         cart.getProductId(),
-                        cart.getProductPrice(),
                         cart.getQuantity()
                 )).toList();
-
-        var cartTotalAmount = userCart.stream()
-            .map(cartItem ->
-                cartItem.getProductPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()))
-            )
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Kafka: topic: create-order
         orderProducer.sendOrderConfirmation(
             new OrderConfirmation(
                 userId,
                 OrderStatus.CREATED,
-                cartTotalAmount,
                 productsPurchase
             )
         );
