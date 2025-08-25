@@ -1,6 +1,6 @@
 package com.webstore.product_service.product;
 
-import com.webstore.product_service.product.dto.ProductSearchCriteria;
+import com.webstore.product_service.catalog.dto.CatalogSearchCriteria;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +39,7 @@ public class ProductSpecification {
                 quantity == null ? null : cb.greaterThanOrEqualTo(root.get("quantity"), quantity);
     }
 
-    public static Specification<Product> buildSpecification(ProductSearchCriteria criteria) {
+    public static Specification<Product> buildSpecification(CatalogSearchCriteria criteria) {
         return Specification.allOf(hasName(criteria.getName()))
                 .and(hasIds(criteria.getIds()))
                 .and(hasCategoryIds(criteria.getCategoryIds()))

@@ -1,5 +1,6 @@
 package com.webstore.product_service.product;
 
+import com.webstore.product_service.catalog.dto.CatalogSearchCriteria;
 import com.webstore.product_service.category.Category;
 import com.webstore.product_service.category.CategoryRepository;
 import com.webstore.product_service.exception.ProductPurchaseException;
@@ -128,8 +129,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductShortResponse> searchProducts(ProductSearchCriteria productSearchCriteria, Pageable productPages) {
-        Specification<Product> spec = ProductSpecification.buildSpecification(productSearchCriteria);
+    public Page<ProductShortResponse> searchProducts(CatalogSearchCriteria catalogSearchCriteria, Pageable productPages) {
+        Specification<Product> spec = ProductSpecification.buildSpecification(catalogSearchCriteria);
         Page<Product> products = productRepo.findAll(spec, productPages);
         return products.map(productMapper::toShortProductResponse);
     }

@@ -6,6 +6,7 @@ import com.webstore.product_service.exception.CategoryValidateException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,19 +28,66 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Long createProduct(CategoryRequest request) {
-        var newCategory = categoryMapper.toCategory(request);
-        validateCategoryUniques(newCategory);
-        return categoryRepo.save(newCategory).getId();
+    public Long createCategory(CategoryRequest request) {
+
+        validateCategoryRequestUniques(request);
+
+        Category category = categoryMapper.toCategory(request);
+
+        if (request.parentId() != null) {
+            Category parentCategory = categoryRepo.findById(request.parentId())
+                    .orElseThrow(() -> new EntityNotFoundException("Parent category not found"));
+            category.setParentCategory(parentCategory);
+            category.setDepth(parentCategory.getDepth() + 1);
+        } else {
+            category.setDepth(0);
+        }
+
+        category.setPath(generatePath(category));
+
+        return categoryRepo.save(category).getId();
     }
 
     @Override
-    public void updateCategory(CategoryRequest request) {
-        var category = categoryRepo.findById(request.id())
-                .orElseThrow(() -> new EntityNotFoundException("Category " + request.id() + "not found"));
-        validateCategoryUniques(category);
-        categoryMerge(category, request);
-        categoryRepo.save(category);
+    @Transactional
+    public CategoryResponse updateCategory(Long categoryId, CategoryRequest request) {
+
+        var category = categoryRepo.findById(categoryId)
+                .orElseThrow(() -> new EntityNotFoundException("Category " + categoryId + "not found"));
+
+        validateCategoryRequestUniques(request, categoryId);
+
+        String oldPath = category.getPath();
+
+        category.setName(request.name());
+        category.setDescription(request.description());
+        category.setSlug(request.slug());
+
+        if (request.parentId() != null && (
+                category.getParentCategory() == null ||
+                !category.getParentCategory().getId().equals(request.parentId())
+            )
+        ) {
+
+            var parentCategory = categoryRepo.findById(request.parentId())
+                .orElseThrow(() -> new EntityNotFoundException("Parent category not found"));
+            category.setParentCategory(parentCategory);
+            category.setDepth(parentCategory.getDepth() + 1);
+        } else if (category.getParentCategory() != null) {
+            category.setParentCategory(null);
+            category.setDepth(0);
+        }
+
+        String newPath = generatePath(category);
+        category.setPath(newPath);
+
+        Category updatedCategory = categoryRepo.save(category);
+
+        if (!oldPath.equals(newPath)) {
+            updateDescendantsPaths(oldPath, newPath);
+        }
+
+        return categoryMapper.toCategoryResponse(updatedCategory);
     }
 
     @Override
@@ -60,27 +108,65 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryResponse findCategoryBySlug(String slug) {
-        return categoryRepo.findBySlug(slug)
-                .map(categoryMapper::toCategoryResponse)
+    public Category findCategoryByUrlPath(String path) {
+        return categoryRepo.findCategoryByPath(convertUrlToCategoryPath(path))
                 .orElseThrow(
-                        () -> new EntityNotFoundException("Category with slug: " + slug + "not found")
+                        () -> new EntityNotFoundException("Category with path: " + path + "not found")
                 );
     }
 
-    private void categoryMerge(Category category, CategoryRequest request) {
-        category.setName(request.name());
-        category.setSlug(request.slug());
-        category.setDescription(request.description());
+    @Override
+    public List<Category> findCategoryDescendants(String path) {
+        return categoryRepo.findCategoriesByPathStartingWith(convertUrlToCategoryPath(path));
     }
 
-    private void validateCategoryUniques(Category category) {
-        List<String> errors = new ArrayList<>();
-        if (categoryRepo.existsByName(category.getName())) {
-            errors.add("Category with name " + category.getName() + " already exists");
+    private void updateDescendantsPaths(String oldPath, String newPath) {
+        List<Category> descendants = categoryRepo.findCategoriesByPathStartingWith(oldPath + "/");
+        for (Category descendant : descendants) {
+            String newDescendantPath = descendant.getPath().replaceFirst("^" + oldPath, newPath);
+            descendant.setPath(newDescendantPath);
+            categoryRepo.save(descendant);
         }
-        if (categoryRepo.existsBySlug(category.getSlug())) {
-            errors.add("Category with slug " + category.getSlug() + " already exists");
+    }
+
+    private String generatePath(Category category) {
+        if (category.getParentCategory() != null) {
+            return category.getParentCategory().getPath() + "/" + category.getSlug();
+        } else {
+            return "/" + category.getSlug();
+        }
+    }
+
+    private String convertUrlToCategoryPath(String urlPath) {
+        String cleanPath = urlPath.replaceAll("^/|/$", "");
+
+        if (cleanPath.isEmpty()) {
+            return "/";
+        }
+
+        return "/" + cleanPath;
+    }
+
+    private void validateCategoryRequestUniques(CategoryRequest category) {
+        validateCategoryRequestUniques(category, null);
+    }
+
+    private void validateCategoryRequestUniques(CategoryRequest category, Long excludeId) {
+        List<String> errors = new ArrayList<>();
+        if (excludeId == null) {
+            if (categoryRepo.existsByName(category.name())) {
+                errors.add("Category with name " + category.name() + " already exists");
+            }
+            if (categoryRepo.existsBySlug(category.slug())) {
+                errors.add("Category with slug " + category.slug() + " already exists");
+            }
+        } else {
+            if (categoryRepo.existsByNameAndIdNot(category.name(), excludeId)) {
+                errors.add("Category with name " + category.name() + " already exists");
+            }
+            if (categoryRepo.existsBySlugAndIdNot(category.slug(), excludeId)) {
+                errors.add("Category with slug " + category.slug() + " already exists");
+            }
         }
         if (!errors.isEmpty()) {
             throw new CategoryValidateException(String.join(" ", errors));

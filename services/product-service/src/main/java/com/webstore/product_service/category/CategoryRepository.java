@@ -1,14 +1,24 @@
 package com.webstore.product_service.category;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
-    boolean existsById(Long id);
     boolean existsByName(String name);
+    Optional<Category> findCategoryByPath(String path);
+    boolean existsByPath(String path);
+    List<Category> findCategoriesByPathStartingWith(String pathPrefix);
+
     boolean existsBySlug(String slug);
-    Optional<Category> findBySlug(String slug);
+
+    boolean existsByNameAndIdNot(String name, Long id);
+
+    boolean existsBySlugAndIdNot(String slug, Long id);
 }

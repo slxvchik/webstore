@@ -31,16 +31,16 @@ public class CategoryController {
     public ResponseEntity<Long> create(
             @RequestBody CategoryRequest request
     ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.createProduct(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.createCategory(request));
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
-    @PutMapping
-    public ResponseEntity<Void> updateCategory(
+    @PutMapping("/{category-id}")
+    public ResponseEntity<CategoryResponse> updateCategory(
+            @PathVariable("category-id") Long categoryId,
             @RequestBody CategoryRequest request
     ) {
-        categoryService.updateCategory(request);
-        return ResponseEntity.accepted().build();
+        return ResponseEntity.ok(categoryService.updateCategory(categoryId, request));
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")

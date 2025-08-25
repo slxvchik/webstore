@@ -14,7 +14,7 @@ import java.util.Set;
 @Setter
 @Builder
 @Entity
-@Table(name = "categories")
+@Table(name = "categories", indexes = @Index(columnList = "path"))
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -22,8 +22,23 @@ public class Category {
     @Column(unique = true, nullable = false)
     private String name;
     private String description;
+    @Column(unique = true, nullable = false)
+    private String slug;
+    @Column(unique = true, nullable = false)
+    private String path;
+    private Integer depth;
+    @Column(columnDefinition = "boolean default true")
+    private Boolean active;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_category_id")
+    private Category parentCategory;
+
+
     @JsonIgnore
+    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private Set<Product> products = new HashSet<>();
+    @JsonIgnore
+    @OneToMany(mappedBy = "parentCategory", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private Set<Category> subCategories = new HashSet<>();
 }

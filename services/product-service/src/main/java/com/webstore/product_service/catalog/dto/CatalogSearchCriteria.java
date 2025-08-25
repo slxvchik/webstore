@@ -1,4 +1,4 @@
-package com.webstore.product_service.product.dto;
+package com.webstore.product_service.catalog.dto;
 
 import lombok.*;
 
@@ -10,7 +10,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductSearchCriteria {
+public class CatalogSearchCriteria {
     private List<Long> ids;
     private String name;
     private List<Long> categoryIds;

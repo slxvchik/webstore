@@ -7,9 +7,10 @@ import java.util.List;
 
 public interface CategoryService {
     List<CategoryResponse> findAll();
-    Long createProduct(CategoryRequest request);
-    void updateCategory(CategoryRequest request);
+    Long createCategory(CategoryRequest request);
+    CategoryResponse updateCategory(Long id, CategoryRequest request);
     void deleteCategory(Long id);
     CategoryResponse findCategoryById(Long categoryId);
-    CategoryResponse findCategoryBySlug(String slug);
+    Category findCategoryByUrlPath(String path);
+    List<Category> findCategoryDescendants(String path);
 }
