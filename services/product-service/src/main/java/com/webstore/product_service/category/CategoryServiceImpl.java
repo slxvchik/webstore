@@ -9,8 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @Service
 @AllArgsConstructor
@@ -21,10 +22,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<CategoryResponse> findAll() {
-        return categoryRepo.findAll()
-                .stream()
-                .map(categoryMapper::toCategoryResponse)
-                .collect(Collectors.toList());
+        List<Category> allCategories = categoryRepo.findAll();
+        return buildCategoryTree(allCategories);
     }
 
     @Override
@@ -118,6 +117,44 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public List<Category> findCategoryDescendants(String path) {
         return categoryRepo.findCategoriesByPathStartingWith(convertUrlToCategoryPath(path));
+    }
+
+    private List<CategoryResponse> buildCategoryTree(List<Category> categories) {
+        Map<Long, CategoryResponse> categoryResponseMap = new HashMap<>();
+
+        for (Category category : categories) {
+            categoryResponseMap.put(category.getId(), categoryMapper.toCategoryResponse(category));
+        }
+
+        List<CategoryResponse> rootCategoryResponses = new ArrayList<>();
+
+        for (Category category : categories) {
+
+            CategoryResponse currentCategoryResponse = categoryResponseMap.get(category.getId());
+
+            if (currentCategoryResponse.getParentId() != null) {
+
+                Long parentId = currentCategoryResponse.getParentId();
+                CategoryResponse parentCategoryResponse = categoryResponseMap.get(parentId);
+
+                if (parentCategoryResponse != null) {
+
+                    // set children category to parent
+                    parentCategoryResponse.getChildren().add(currentCategoryResponse);
+
+                } else {
+
+                    rootCategoryResponses.add(currentCategoryResponse);
+
+                }
+            } else {
+
+                rootCategoryResponses.add(currentCategoryResponse);
+
+            }
+        }
+
+        return rootCategoryResponses;
     }
 
     private void updateDescendantsPaths(String oldPath, String newPath) {

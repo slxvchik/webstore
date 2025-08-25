@@ -3,18 +3,10 @@ package com.webstore.product_service.product;
 import com.webstore.product_service.product.dto.*;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.HttpClientErrorException;
-
-import java.util.Arrays;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -27,14 +19,13 @@ public class ProductController {
     public ResponseEntity<ProductShortResponse> showShortProduct(
             @PathVariable("product-id") Long productId
     ) {
-        return ResponseEntity.ok(productService.findProductById(productId));
+        return ResponseEntity.ok(productService.findProductShortById(productId));
     }
 
     @GetMapping("/{product-id}")
-    public ResponseEntity<ProductShortResponse> showProduct(
+    public ResponseEntity<ProductResponse> showProduct(
             @PathVariable("product-id") Long productId
     ) {
-
         return ResponseEntity.ok(productService.findProductById(productId));
     }
 
@@ -52,11 +43,10 @@ public class ProductController {
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @PutMapping("/{product-id}")
-    public ResponseEntity<Void> updateProduct(
+    public ResponseEntity<ProductResponse> updateProduct(
             @RequestBody @Valid ProductRequest request
     ) {
-        productService.updateProduct(request);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(productService.updateProduct(request));
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")

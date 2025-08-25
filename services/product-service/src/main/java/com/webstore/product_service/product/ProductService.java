@@ -8,9 +8,10 @@ import org.springframework.data.domain.Pageable;
 public interface ProductService {
     boolean productExistsById(Long id);
     Long createProduct(ProductRequest request);
-    void updateProduct(ProductRequest request);
+    ProductResponse updateProduct(ProductRequest request);
     void deleteProduct(Long id);
-    ProductShortResponse findProductById(Long id);
+    ProductShortResponse findProductShortById(Long id);
+    ProductResponse findProductById(Long id);
     ProductPurchaseResponse purchaseProducts(ProductPurchaseRequest requests);
     Page<ProductShortResponse> searchProducts(CatalogSearchCriteria catalogSearchCriteria, Pageable productPages);
 }

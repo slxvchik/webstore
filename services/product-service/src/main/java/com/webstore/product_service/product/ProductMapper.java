@@ -1,12 +1,12 @@
 package com.webstore.product_service.product;
 
 import com.webstore.product_service.category.Category;
-import com.webstore.product_service.product.dto.ProductPurchaseItemRequest;
-import com.webstore.product_service.product.dto.ProductPurchaseItemResponse;
-import com.webstore.product_service.product.dto.ProductRequest;
-import com.webstore.product_service.product.dto.ProductShortResponse;
+import com.webstore.product_service.product.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
@@ -21,6 +21,22 @@ public class ProductMapper {
                 .quantity(productRequest.quantity())
                 .category(category)
                 .build();
+    }
+
+    public ProductResponse toProductResponse(Product product) {
+        return new ProductResponse(
+                product.getId(),
+                product.getName(),
+                product.getDescription(),
+                product.getPrice(),
+                product.getQuantity(),
+                product.getThumbnail(),
+                product.getImages(),
+                product.getCreated(),
+                product.getRating(),
+                product.getReviewsCount(),
+                product.getCategory()
+        );
     }
 
     public ProductShortResponse toShortProductResponse(Product product) {

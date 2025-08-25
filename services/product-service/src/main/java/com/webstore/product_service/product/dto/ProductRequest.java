@@ -14,7 +14,6 @@ public record ProductRequest(
         BigDecimal price,
         @Positive(message = "Quantity is mandatory")
         Integer quantity,
-        @PositiveOrZero
         Long categoryId
 ) {
 }

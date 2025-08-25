@@ -2,10 +2,9 @@ package com.webstore.product_service.category;
 
 import com.webstore.product_service.category.dto.CategoryRequest;
 import com.webstore.product_service.category.dto.CategoryResponse;
-import com.webstore.product_service.category.dto.CategoryShortResponse;
 import org.springframework.stereotype.Component;
 
-import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 @Component
 public class CategoryMapper {
@@ -19,6 +18,7 @@ public class CategoryMapper {
                 .name(request.name())
                 .description(request.description())
                 .slug(request.slug())
+                .active(request.active())
                 .build();
     }
 
@@ -26,27 +26,17 @@ public class CategoryMapper {
         if (category == null) {
             return null;
         }
-        return new CategoryResponse(
-                category.getId(),
-                category.getName(),
-                category.getDescription(),
-                category.getSlug(),
-                category.getPath(),
-                category.getDepth(),
-                category.getParentCategory() != null ? category.getParentCategory().getId() : null,
-                category.getActive(),
-                category.getSubCategories().stream()
-                        .map(this::toShortResponse)
-                        .collect(Collectors.toList())
-        );
+        return CategoryResponse.builder()
+                .id(category.getId())
+                .name(category.getName())
+                .description(category.getDescription())
+                .slug(category.getSlug())
+                .path(category.getPath())
+                .depth(category.getDepth())
+                .parentId(category.getParentCategory() != null ? category.getParentCategory().getId() : null)
+                .active(category.getActive())
+                .children(new ArrayList<>())
+                .build();
     }
 
-    public CategoryShortResponse toShortResponse(Category category) {
-        return new CategoryShortResponse(
-                category.getId(),
-                category.getName(),
-                category.getSlug(),
-                category.getPath()
-        );
-    }
 }

@@ -43,14 +43,21 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void updateProduct(ProductRequest request) {
+    public ProductResponse updateProduct(ProductRequest request) {
         var product = productRepo.findById(request.id()).orElseThrow(
                 () -> new EntityNotFoundException("Product with id" + request.id() + " not found.")
         );
         var category = categoryRepo.findById(request.categoryId()).orElseThrow(
                 () -> new EntityNotFoundException("Category with id " + request.categoryId() + " not found")
         );
-        productsMerge(product, request, category);
+
+        product.setName(request.name());
+        product.setDescription(request.description());
+        product.setPrice(request.price());
+        product.setQuantity(request.quantity());
+        product.setCategory(category);
+
+        return productMapper.toProductResponse(productRepo.save(product));
     }
 
     @Override
@@ -62,9 +69,16 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductShortResponse findProductById(Long id) {
+    public ProductShortResponse findProductShortById(Long id) {
         return productRepo.findById(id)
                 .map(productMapper::toShortProductResponse)
+                .orElseThrow(() -> new EntityNotFoundException("Product with id: " + id + " not found."));
+    }
+
+    @Override
+    public ProductResponse findProductById(Long id) {
+        return productRepo.findById(id)
+                .map(productMapper::toProductResponse)
                 .orElseThrow(() -> new EntityNotFoundException("Product with id: " + id + " not found."));
     }
 
@@ -133,13 +147,5 @@ public class ProductServiceImpl implements ProductService {
         Specification<Product> spec = ProductSpecification.buildSpecification(catalogSearchCriteria);
         Page<Product> products = productRepo.findAll(spec, productPages);
         return products.map(productMapper::toShortProductResponse);
-    }
-
-    private void productsMerge(Product product, ProductRequest productRequest, Category newCategory) {
-        product.setName(productRequest.name());
-        product.setDescription(productRequest.description());
-        product.setPrice(productRequest.price());
-        product.setQuantity(productRequest.quantity());
-        product.setCategory(newCategory);
     }
 }

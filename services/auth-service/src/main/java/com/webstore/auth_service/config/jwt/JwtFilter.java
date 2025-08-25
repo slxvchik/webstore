@@ -96,7 +96,7 @@ public class JwtFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
         // Add new access token to response headers
-        response.addHeader("Authorization", "Bearer " + newAccessToken);
+        response.setHeader("Authorization", "Bearer " + newAccessToken);
 
         filterChain.doFilter(request, response);
     }

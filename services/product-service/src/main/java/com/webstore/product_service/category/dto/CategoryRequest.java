@@ -10,6 +10,7 @@ public record CategoryRequest(
         String name,
         @NotBlank(message = "Slug must not be blank")
         String slug,
+        Boolean active,
         Long parentId
 ) {
 }
