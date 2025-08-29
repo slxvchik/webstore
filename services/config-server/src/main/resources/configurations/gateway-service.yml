@@ -18,7 +18,6 @@ spring:
           uri: lb:http://AUTH-SERVICE
           predicates:
             - Path=/api/v1/auth/**
-            # - AddRequestHeader=Role, ADMIN  # Дополнительный заголовок
 
         - id: user-service
           uri: lb:http://AUTH-SERVICE
@@ -53,7 +52,6 @@ spring:
           predicates:
             - Path=/api/v1/products/**
           filters:
-            - BlockProductPathFilter
             - JwtAuthFilter
 
         - id: product-service-category
@@ -62,6 +60,12 @@ spring:
             - Path=/api/v1/categories/**
           filters:
             - JwtAuthFilter
+
+
+        - id: product-service-catalog
+          uri: lb:http://PRODUCT-SERVICE
+          predicates:
+            - Path=/api/v1/catalog/**
 
 
 #        - id: payment-service

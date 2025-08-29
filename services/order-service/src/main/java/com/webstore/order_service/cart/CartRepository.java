@@ -9,7 +9,7 @@ import java.util.List;
 
 @Repository
 public interface CartRepository extends JpaRepository<Cart, Long> {
-    Page<Cart> findAllByUserId(Long userId, Pageable pageRequest);
-    void deleteAllByUserId(Long userId);
-    List<Cart> findAllByUserId(Long userId);
+    Page<Cart> findAllByUserId(String userId, Pageable pageRequest);
+    void deleteAllByUserId(String userId);
+    List<Cart> findAllByUserId(String userId);
 }

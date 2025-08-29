@@ -7,7 +7,7 @@ import jakarta.validation.constraints.*;
 import java.util.Set;
 
 public record UserRequest (
-        Long id,
+        String id,
 
         @NotBlank(message = "Username must not be blank")
         @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")

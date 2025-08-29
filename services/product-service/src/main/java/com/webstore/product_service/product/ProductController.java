@@ -2,11 +2,15 @@ package com.webstore.product_service.product;
 
 import com.webstore.product_service.product.dto.*;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -62,7 +66,15 @@ public class ProductController {
      * ==========================MICROSERVICE RIGHTS==========================
      */
 
-    @PreAuthorize("hasAnyAuthority('MICROSERVICE')")
+//    @PreAuthorize("hasAnyAuthority('MICROSERVICE')")
+    @PostMapping("/short/batch")
+    public ResponseEntity<List<ProductShortResponse>> showProducts(
+            @RequestBody @Valid ProductBatchRequest request
+    ) {
+        return ResponseEntity.ok(productService.findProductShortByIds(request.ids()));
+    }
+
+//    @PreAuthorize("hasAnyAuthority('MICROSERVICE')")
     @PostMapping("/purchase")
     public ResponseEntity<ProductPurchaseResponse> purchaseProduct(
             @RequestBody @Valid ProductPurchaseRequest request
@@ -70,7 +82,7 @@ public class ProductController {
         return ResponseEntity.ok(productService.purchaseProducts(request));
     }
 
-    @PreAuthorize("hasAnyAuthority('MICROSERVICE')")
+//    @PreAuthorize("hasAnyAuthority('MICROSERVICE')")
     @GetMapping("/{product-id}/exists")
     public ResponseEntity<Boolean> productExists(
             @PathVariable("product-id") Long productId

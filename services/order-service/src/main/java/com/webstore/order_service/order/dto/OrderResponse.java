@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 public record OrderResponse(
         Long id,
-        Long userId,
+        String userId,
         OrderStatus status,
         BigDecimal total,
         LocalDateTime created

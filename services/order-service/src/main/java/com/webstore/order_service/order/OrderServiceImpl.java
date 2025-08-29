@@ -72,7 +72,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Page<OrderResponse> findOrderByUserId(Long userId, Pageable page) {
+    public Page<OrderResponse> findOrderByUserId(String userId, Pageable page) {
         var orders = orderRepository.findAllByUserId(userId, page).stream()
                 .map(orderMapper::toOrderResponse)
                 .toList();
@@ -94,7 +94,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Long isOrderOwner(Long orderId) {
+    public String isOrderOwner(Long orderId) {
         return orderRepository.findById(orderId)
                 .map(Order::getUserId)
                 .orElseThrow(

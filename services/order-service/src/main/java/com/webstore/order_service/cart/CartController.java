@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,12 +30,11 @@ public class CartController {
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
     @GetMapping("/me")
     public ResponseEntity<Page<CartResponse>> getMyCarts(
-            @RequestParam(value = "page", defaultValue = "1") @Min(1) Integer page,
+            @PageableDefault(page = 0, size = 10, sort = "created", direction = Sort.Direction.DESC)
+            Pageable pageable,
             @AuthenticationPrincipal Authentication authentication
     ) {
-        Pageable pageRequest = PageRequest.of(page, 10, Sort.by(Sort.Direction.DESC, "created"));
-
-        Page<CartResponse> carts = cartService.findUserCartByUserId((long) authentication.getPrincipal(), pageRequest);
+        Page<CartResponse> carts = cartService.findUserCartByUserId(authentication.getPrincipal().toString(), pageable);
         return ResponseEntity.ok(carts);
     }
 
@@ -44,7 +44,7 @@ public class CartController {
             @RequestBody @Valid CartRequest request,
             @AuthenticationPrincipal Authentication authentication
     ) {
-        Long userId = (long) authentication.getPrincipal();
+        String userId = authentication.getPrincipal().toString();
         return ResponseEntity.status(HttpStatus.CREATED).body(cartService.createCart(userId, request));
     }
 
@@ -54,7 +54,7 @@ public class CartController {
             @RequestBody @Valid CartRequest request,
             @AuthenticationPrincipal Authentication authentication
     ) {
-        Long userId = (long) authentication.getPrincipal();
+        String userId = authentication.getPrincipal().toString();
         if (!cartService.isUserCart(userId, request.id())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This cart does not belong to user");
         }
@@ -68,7 +68,7 @@ public class CartController {
             @PathVariable("cart-id") Long cartId,
             @AuthenticationPrincipal Authentication authentication
     ) {
-        Long userId = (long) authentication.getPrincipal();
+        String userId = authentication.getPrincipal().toString();
         if (!cartService.isUserCart(userId, cartId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This cart does not belong to user");
         }
@@ -81,7 +81,7 @@ public class CartController {
     public ResponseEntity<Void> purchaseMyCart(
             @AuthenticationPrincipal Authentication authentication
     ) {
-        cartService.purchaseProducts((long) authentication.getPrincipal());
+        cartService.purchaseProducts(authentication.getPrincipal().toString());
         return ResponseEntity.ok().build();
     }
 
@@ -92,10 +92,10 @@ public class CartController {
     @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping
     public ResponseEntity<Page<CartResponse>> findAll(
-            @RequestParam(value = "page", defaultValue = "1") @Min(1) Integer page
+            @PageableDefault(page = 0, size = 10, sort = "created", direction = Sort.Direction.DESC)
+            Pageable pageable
     ) {
-        Pageable pageRequest = PageRequest.of(page, 10);
-        return ResponseEntity.ok(cartService.findAllCarts(pageRequest));
+        return ResponseEntity.ok(cartService.findAllCarts(pageable));
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
@@ -110,17 +110,17 @@ public class CartController {
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @GetMapping("/user/{user-id}")
     public ResponseEntity<Page<CartResponse>> findUserCarts(
-            @RequestParam(value = "page", defaultValue = "1") @Min(1) Integer page,
-            @PathVariable("user-id") Long userId
+            @PageableDefault(page = 0, size = 10, sort = "created", direction = Sort.Direction.DESC)
+            Pageable pageable,
+            @PathVariable("user-id") String userId
     ) {
-        Pageable pageRequest = PageRequest.of(page, 10);
-        return ResponseEntity.ok(cartService.findUserCartByUserId(userId, pageRequest));
+        return ResponseEntity.ok(cartService.findUserCartByUserId(userId, pageable));
     }
 
     // From kafka after order created
 //    @DeleteMapping("/user/{user-id}")
     public ResponseEntity<Void> deleteUserCart(
-            @PathVariable("user-id") Long userId
+            @PathVariable("user-id") String userId
     ) {
         cartService.deleteUserCart(userId);
         return ResponseEntity.ok().build();

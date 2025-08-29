@@ -4,6 +4,8 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
@@ -22,16 +24,5 @@ public record CatalogSearchRequest(
     @Positive
     BigDecimal maxPrice,
     @RequestParam(value = "quantity", required = false)
-    Boolean quantity,
-
-    Pageable pageable
-
-//    @RequestParam(value = "page", defaultValue = "1")
-//    @Min(1)
-//    int page,
-//    @RequestParam(value = "size", defaultValue = "20")
-//    @Min(1) @Max(100)
-//    int size,
-//    @RequestParam(value = "sort", defaultValue = "created,desc")
-//    String sort
+    Boolean quantity
 ) {}

@@ -21,8 +21,8 @@ import java.util.Set;
 @Table(name = "users")
 public class User implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @NotBlank(message = "Username must not be blank")
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
@@ -51,10 +51,6 @@ public class User implements UserDetails {
     @Size(min = 12, max = 12, message = "Phone number must be 12 characters")
     @Column(name = "phone_number", unique = true)
     private String phone;
-
-    @Pattern(regexp = "^(http|https)://.*$", message = "Avatar URL must be a valid HTTP or HTTPS URL")
-    @Column(name = "image_url")
-    private String avatar;
 
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean locked;

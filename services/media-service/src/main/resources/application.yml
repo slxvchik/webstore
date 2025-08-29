@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: media-service
+#  config:
+#    import: optional:configserver:http://localhost:8888
+
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5433/media
+    username: webstore
+    password: webstore
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8040
+
+jwt:
+  secret: gqi0TQmTCBWt9273UBrDBfKRjy57Y9UABNWAwtv5hocrGiSzI6fHqz7dfYelhhUKyoiAaYj/S8Csp2hQf2ugBQ==
+
+media:
+  image:
+    storage-path: "C:/dev/pet_projects/webstore/services/media-service/src/main/resources/static/storage/"

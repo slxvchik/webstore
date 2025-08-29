@@ -8,6 +8,9 @@ import com.webstore.product_service.catalog.dto.CatalogSearchRequest;
 import com.webstore.product_service.product.dto.ProductShortResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +32,9 @@ public class CatalogController {
     @GetMapping("{*categoryPath}")
     public ResponseEntity<Page<ProductShortResponse>> findProducts(
             @PathVariable String categoryPath,
-            CatalogSearchRequest catalogSearchRequest
+            CatalogSearchRequest catalogSearchRequest,
+            @PageableDefault(page = 0, size = 10, sort = "created", direction = Sort.Direction.DESC)
+            Pageable pageable
     ) {
 
         if (catalogSearchRequest.minPrice() != null && catalogSearchRequest.maxPrice() != null &&
@@ -49,34 +54,6 @@ public class CatalogController {
                 .maxPrice(catalogSearchRequest.maxPrice())
                 .build();
 
-        return ResponseEntity.ok(productService.searchProducts(catalogSearchCriteria, catalogSearchRequest.pageable()));
+        return ResponseEntity.ok(productService.searchProducts(catalogSearchCriteria, pageable));
     }
-
-//    private Sort parseSort(String sort) {
-//
-//        String[] sortParams = sort.split(",");
-//
-//        if (sortParams.length != 2) {
-//            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST,
-//                    "Invalid sort parameter. Use format: field,direction");
-//        }
-//
-//        String field = sortParams[0];
-//        Sort.Direction direction;
-//
-//        try {
-//            direction = Sort.Direction.fromString(sortParams[1]);
-//        } catch (IllegalArgumentException e) {
-//            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST,
-//                    "Invalid sort direction. Use 'asc' or 'desc'");
-//        }
-//
-//        List<String> allowedSortFields = Arrays.asList("name", "price", "created");
-//        if (!allowedSortFields.contains(field)) {
-//            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST,
-//                    "Invalid sort field. Allowed fields: " + allowedSortFields);
-//        }
-//
-//        return Sort.by(direction, field);
-//    }
 }

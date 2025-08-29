@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,10 +30,10 @@ public class OrderController {
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
     @GetMapping("/me/all")
     public ResponseEntity<Page<OrderResponse>> findAllByAuthUserId(
-            @RequestParam(value = "page") @Min(1) Integer page,
-            @AuthenticationPrincipal Long userId
+            @PageableDefault(page = 0, size = 10, sort = "created", direction = Sort.Direction.DESC)
+            Pageable pageable,
+            @AuthenticationPrincipal String userId
     ) {
-        Pageable pageable = PageRequest.of(page, 10);
         return ResponseEntity.ok(orderService.findOrderByUserId(userId, pageable));
     }
 
@@ -43,7 +45,7 @@ public class OrderController {
             Authentication authentication
     ) {
 
-        Long userId = (Long) authentication.getPrincipal();
+        String userId = authentication.getPrincipal().toString();
 
         var orderResponse = orderService.findOrderById(orderId);
 
@@ -61,10 +63,10 @@ public class OrderController {
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @GetMapping("/user/{user-id}/all")
     public ResponseEntity<Page<OrderResponse>> findAllByUser(
-            @RequestParam(value = "page") @Min(1) Integer page,
-            @PathVariable("user-id") Long userId
+            @PageableDefault(page = 0, size = 10, sort = "created", direction = Sort.Direction.DESC)
+            Pageable pageable,
+            @PathVariable("user-id") String userId
     ) {
-        Pageable pageable = PageRequest.of(page, 10);
         return ResponseEntity.ok(orderService.findOrderByUserId(userId, pageable));
     }
 

@@ -36,10 +36,17 @@ public class Product {
     @Column(nullable = false)
     @PositiveOrZero
     private Integer quantity;
-    @Column
-    private String thumbnail;
-    @Column
-    private List<String> images = new ArrayList<>();
+
+    @Column(name = "thumbnail_image_id")
+    private String thumbnailImageId;
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "product_gallery",
+            joinColumns = @JoinColumn(name = "product_id")
+    )
+    private List<String> galleryImageIds = new ArrayList<>();
+
     @Column(nullable = false)
     private LocalDateTime created;
 
@@ -50,7 +57,7 @@ public class Product {
     @PositiveOrZero
     private Integer reviewsCount;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
 }

@@ -16,8 +16,8 @@ public class ParsedToken {
         this.claims = claims;
     }
 
-    public Long getUserId() {
-        return claims.get("userId", Long.class);
+    public String getUserId() {
+        return claims.get("userId", String.class);
     }
 
     public User getUser() {
@@ -29,7 +29,7 @@ public class ParsedToken {
                 .collect(Collectors.toSet());
 
         return User.builder()
-                .id(claims.get("userId", Long.class))
+                .id(claims.get("userId", String.class))
                 .username(claims.get("username", String.class))
                 .roles(userRoles)
                 .build();

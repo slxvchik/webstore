@@ -73,9 +73,9 @@ public class ProductClient {
     public List<ProductShortResponse> findProductsByIds(List<Long> productIds) {
 
         ResponseEntity<List<ProductShortResponse>> productsResponse = restTemplate.exchange(
-                productUrl + "/search?ids=" +
+                productUrl + "/short/batch?ids=" +
                         productIds.stream().map(String::valueOf).collect(Collectors.joining(",")),
-                HttpMethod.GET,
+                HttpMethod.POST,
                 null,
                 new ParameterizedTypeReference<>() {}
         );

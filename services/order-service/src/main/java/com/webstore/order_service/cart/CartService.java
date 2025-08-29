@@ -9,11 +9,11 @@ import java.util.List;
 
 public interface CartService {
     Page<CartResponse> findAllCarts(Pageable pageRequest);
-    Page<CartResponse> findUserCartByUserId(Long userId, Pageable pageRequest);
-    Long createCart(Long userId, CartRequest request);
+    Page<CartResponse> findUserCartByUserId(String userId, Pageable pageRequest);
+    Long createCart(String userId, CartRequest request);
     void updateCart(CartRequest request);
     void deleteCart(Long cartId);
-    void purchaseProducts(Long userId);
-    void deleteUserCart(Long userId);
-    boolean isUserCart(Long userId, Long cartId);
+    void purchaseProducts(String userId);
+    void deleteUserCart(String userId);
+    boolean isUserCart(String userId, Long cartId);
 }

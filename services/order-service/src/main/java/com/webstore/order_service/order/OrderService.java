@@ -11,7 +11,7 @@ import java.util.List;
 public interface OrderService {
     void handleOrderCreated(OrderConfirmation orderConfirmation);
     OrderResponse findOrderById(Long orderId);
-    Page<OrderResponse> findOrderByUserId(Long userId, Pageable pageable);
+    Page<OrderResponse> findOrderByUserId(String userId, Pageable pageable);
     void updateOrderStatus(OrderRequest orderRequest);
-    Long isOrderOwner(Long orderId);
+    String isOrderOwner(Long orderId);
 }

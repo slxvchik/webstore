@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse findUser(Long userId) {
+    public UserResponse findUser(String userId) {
         return userRepo.findById(userId)
                 .map(userMapper::toUserResponse)
                 .orElseThrow(
@@ -53,7 +53,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void deleteUser(Long userId) {
+    public void deleteUser(String userId) {
         if (!userRepo.existsById(userId)) {
             throw new UserNotFoundException("Category " + userId + "not found");
         }
@@ -61,19 +61,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateAuthUser(Long userId, UpdateUserRequest request) {
+    public void updateAuthUser(String userId, UpdateUserRequest request) {
         User user = userRepo.findById(userId).orElseThrow(() ->
                 new UserNotFoundException("User with id " + userId + " not found.")
         );
 
         user.setFullname(request.fullname());
-        user.setAvatar(request.avatar());
 
         userRepo.save(user);
     }
 
     @Override
-    public void updatePassword(Long userId, UpdatePasswordRequest request) {
+    public void updatePassword(String userId, UpdatePasswordRequest request) {
         User user = userRepo.findById(userId).orElseThrow(() ->
                 new UserNotFoundException("User with id " + userId + " not found")
         );
@@ -85,7 +84,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateUsername(Long userId, UpdateUsernameRequest request) {
+    public void updateUsername(String userId, UpdateUsernameRequest request) {
         User user = userRepo.findById(userId)
                 .orElseThrow(()-> new UserNotFoundException("User with id " + userId + " not found"));
         if (!passwordEncoder.matches(user.getPassword(), request.password())) {
@@ -96,7 +95,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateEmail(Long userId, UpdateEmailRequest request) {
+    public void updateEmail(String userId, UpdateEmailRequest request) {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User with id " + userId + " not found"));
         if (!passwordEncoder.matches(user.getPassword(), request.password())) {
@@ -131,7 +130,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Long createUser(UserRequest request) {
+    public String createUser(UserRequest request) {
 
         User user = User.builder()
                 .id(request.id())

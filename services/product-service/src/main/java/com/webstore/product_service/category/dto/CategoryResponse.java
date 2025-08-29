@@ -22,7 +22,4 @@ public class CategoryResponse {
     private Long parentId;
     private Boolean active;
     private List<CategoryResponse> children;
-    public CategoryResponse() {
-        children = new ArrayList<>();
-    }
 }

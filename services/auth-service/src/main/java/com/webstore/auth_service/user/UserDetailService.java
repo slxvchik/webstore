@@ -21,7 +21,7 @@ public class UserDetailService implements UserDetailsService {
     }
 
     @Transactional
-    public UserDetails loadUserById(Long id) {
+    public UserDetails loadUserById(String id) {
         return userRepository.findByIdWithAuthorities(id)
                 .orElseThrow(() -> new UsernameNotFoundException("User id does not exist, please try again: " + id));
     }

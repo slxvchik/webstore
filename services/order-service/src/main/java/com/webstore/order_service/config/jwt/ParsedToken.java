@@ -19,8 +19,8 @@ public class ParsedToken {
         return claims.getSubject();
     }
 
-    public Long getUserId() {
-        return (Long) claims.get("userId");
+    public String getUserId() {
+        return claims.get("userId", String.class);
     }
 
     public Set<SimpleGrantedAuthority> getAuthorities() {

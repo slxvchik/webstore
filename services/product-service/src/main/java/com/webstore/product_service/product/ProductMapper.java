@@ -1,16 +1,21 @@
 package com.webstore.product_service.product;
 
 import com.webstore.product_service.category.Category;
+import com.webstore.product_service.category.CategoryMapper;
+import com.webstore.product_service.category.dto.CategoryResponse;
 import com.webstore.product_service.product.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 @Component
 @RequiredArgsConstructor
 public class ProductMapper {
+
+    private final CategoryMapper categoryMapper;
 
     public Product toProduct(ProductRequest productRequest, Category category) {
         return Product.builder()
@@ -30,12 +35,12 @@ public class ProductMapper {
                 product.getDescription(),
                 product.getPrice(),
                 product.getQuantity(),
-                product.getThumbnail(),
-                product.getImages(),
+                "",
+                new ArrayList<>(),
                 product.getCreated(),
                 product.getRating(),
                 product.getReviewsCount(),
-                product.getCategory()
+                categoryMapper.toCategoryResponse(product.getCategory())
         );
     }
 
@@ -45,7 +50,7 @@ public class ProductMapper {
                 product.getName(),
                 product.getPrice(),
                 product.getQuantity(),
-                product.getThumbnail(),
+                "",
                 product.getRating(),
                 product.getReviewsCount()
         );

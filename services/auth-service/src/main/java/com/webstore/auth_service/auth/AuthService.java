@@ -31,7 +31,7 @@ public class AuthService {
     private final UserRepository userRepo;
 
     @Transactional
-    public Long register(RegisterRequest registerRequest) {
+    public String register(RegisterRequest registerRequest) {
 
         List<String> errors = new ArrayList<>();
         if (userRepo.existsByUsername(registerRequest.username())) {
@@ -59,7 +59,7 @@ public class AuthService {
                 .roles(roles)
                 .build();
 
-        Long userId = userRepo.save(user).getId();
+        String userId = userRepo.save(user).getId();
 
         // todo: send notification to confirm email
 

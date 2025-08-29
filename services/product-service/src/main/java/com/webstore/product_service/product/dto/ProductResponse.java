@@ -1,6 +1,6 @@
 package com.webstore.product_service.product.dto;
 
-import com.webstore.product_service.category.Category;
+import com.webstore.product_service.category.dto.CategoryResponse;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,6 +18,6 @@ public record ProductResponse
         LocalDateTime created,
         Float rating,
         Integer reviewsCount,
-        Category category
+        CategoryResponse category
 ){
 }

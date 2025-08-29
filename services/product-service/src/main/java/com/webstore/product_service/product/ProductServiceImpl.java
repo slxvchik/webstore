@@ -10,7 +10,9 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -147,5 +149,13 @@ public class ProductServiceImpl implements ProductService {
         Specification<Product> spec = ProductSpecification.buildSpecification(catalogSearchCriteria);
         Page<Product> products = productRepo.findAll(spec, productPages);
         return products.map(productMapper::toShortProductResponse);
+    }
+
+    @Override
+    public List<ProductShortResponse> findProductShortByIds(List<Long> ids) {
+        return productRepo.findAllByIdInWithLock(ids)
+                .stream()
+                .map(productMapper::toShortProductResponse)
+                .toList();
     }
 }

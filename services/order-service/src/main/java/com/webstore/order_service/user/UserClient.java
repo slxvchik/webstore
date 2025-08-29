@@ -13,9 +13,9 @@
 //public interface UserClient {
 //
 //    @GetMapping("/{user-id}")
-//    Optional<UserResponse> findUserById(@PathVariable("user-id") Long userId);
+//    Optional<UserResponse> findUserById(@PathVariable("user-id") String userId);
 //
 //    @GetMapping("/{user-id}/exists")
-//    boolean userExists(@PathVariable("user-id") Long userId);
+//    boolean userExists(@PathVariable("user-id") String userId);
 //
 //}

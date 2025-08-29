@@ -107,14 +107,14 @@ public class UserController {
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @GetMapping("/{user-id}")
     public ResponseEntity<UserResponse> getUser(
-            @PathVariable("user-id") Long userId
+            @PathVariable("user-id") String userId
     ) {
         return ResponseEntity.ok(userService.findUser(userId));
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN')")
     @PostMapping
-    public ResponseEntity<Long> createUser(
+    public ResponseEntity<String> createUser(
             @RequestBody @Valid UserRequest request
     ) {
         return ResponseEntity.accepted().body(userService.createUser(request));
@@ -132,7 +132,7 @@ public class UserController {
     @PreAuthorize("hasAnyAuthority('ADMIN')")
     @DeleteMapping("/{user-id}")
     public ResponseEntity<Void> deleteUser(
-            @PathVariable("user-id") Long userId
+            @PathVariable("user-id") String userId
     ) {
         userService.deleteUser(userId);
         return ResponseEntity.accepted().build();

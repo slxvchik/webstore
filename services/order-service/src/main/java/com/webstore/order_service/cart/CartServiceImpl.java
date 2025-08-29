@@ -43,7 +43,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public Page<CartResponse> findUserCartByUserId(Long userId, Pageable pageRequest) {
+    public Page<CartResponse> findUserCartByUserId(String userId, Pageable pageRequest) {
 
         Page<Cart> cartsPage = cartRepository.findAllByUserId(userId, pageRequest);
 
@@ -53,7 +53,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public Long createCart(Long userId, CartRequest request) {
+    public Long createCart(String userId, CartRequest request) {
 
         Cart cart = cartMapper.toCart(userId, request);
 
@@ -97,7 +97,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public void purchaseProducts(Long userId) {
+    public void purchaseProducts(String userId) {
 
         var userCart = cartRepository.findAllByUserId(userId);
 
@@ -123,12 +123,12 @@ public class CartServiceImpl implements CartService {
 //            topics = "order-confirmed",
 //            groupId = "orderGroup"
 //    )
-    public void deleteUserCart(Long userId) {
+    public void deleteUserCart(String userId) {
 //        cartRepository.deleteAllByUserId(userId);
     }
 
     @Override
-    public boolean isUserCart(Long userId, Long cartId) {
+    public boolean isUserCart(String userId, Long cartId) {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new EntityNotFoundException("Cart with ID: " + cartId + " not found"));
         return cart.getUserId().equals(userId);

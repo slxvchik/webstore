@@ -21,7 +21,7 @@ public class ProductSpecification {
 
     public static Specification<Product> hasCategoryIds(List<Long> categoryIds) {
         return (root, query, cb) ->
-                categoryIds == null || categoryIds.isEmpty() ? null : root.get("category_id").in(categoryIds);
+                categoryIds == null || categoryIds.isEmpty() ? null : root.get("category").get("id").in(categoryIds);
     }
 
     public static Specification<Product> priceGreaterThanOrEqual(BigDecimal minPrice) {

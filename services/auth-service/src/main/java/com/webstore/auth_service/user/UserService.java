@@ -10,21 +10,21 @@ public interface UserService {
 
     List<UserResponse> findAllUsers();
 
-    UserResponse findUser(Long userId);
+    UserResponse findUser(String userId);
 
-    void deleteUser(Long userId);
+    void deleteUser(String userId);
 
-    void updateAuthUser(Long userId, UpdateUserRequest request);
+    void updateAuthUser(String userId, UpdateUserRequest request);
 
-    void updatePassword(Long userId, UpdatePasswordRequest request);
+    void updatePassword(String userId, UpdatePasswordRequest request);
 
-    void updateUsername(Long userId, UpdateUsernameRequest request);
+    void updateUsername(String userId, UpdateUsernameRequest request);
 
-    void updateEmail(Long userId, UpdateEmailRequest request);
+    void updateEmail(String userId, UpdateEmailRequest request);
 
     void forgotPassword(ForgotPasswordRequest request);
 
     void recoveryPassword(PasswordRecoveryRequest request, String confirmationToken);
 
-    Long createUser(UserRequest request);
+    String createUser(UserRequest request);
 }

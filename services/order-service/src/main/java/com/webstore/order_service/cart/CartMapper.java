@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 @Component
 public class CartMapper {
 
-    public Cart toCart(Long userId, CartRequest request) {
+    public Cart toCart(String userId, CartRequest request) {
         return Cart.builder()
                 .id(request.id())
                 .userId(userId)
