@@ -12,9 +12,8 @@ public interface ProductService {
     Long createProduct(ProductRequest request);
     ProductResponse updateProduct(ProductRequest request);
     void deleteProduct(Long id);
-    ProductShortResponse findProductShortById(Long id);
-    ProductResponse findProductById(Long id);
+    ProductShortResponse getProductShortResponseById(Long id);
+    ProductResponse getProductResponseById(Long id);
     ProductPurchaseResponse purchaseProducts(ProductPurchaseRequest requests);
-    Page<ProductShortResponse> searchProducts(CatalogSearchCriteria catalogSearchCriteria, Pageable productPages);
-    List<ProductShortResponse> findProductShortByIds(List<Long> ids);
+    List<ProductShortResponse> getProductShortResponseByIds(List<Long> ids);
 }

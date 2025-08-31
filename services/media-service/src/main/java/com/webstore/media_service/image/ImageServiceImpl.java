@@ -1,97 +1,86 @@
 package com.webstore.media_service.image;
 
 import com.webstore.media_service.exceptions.ImageException;
+import com.webstore.media_service.exceptions.ImageNotFoundException;
+import com.webstore.media_service.exceptions.ImageValidationException;
 import com.webstore.media_service.image.dto.ImageResponse;
-import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import com.webstore.media_service.storage.ImageStorageService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class ImageServiceImpl implements ImageService {
 
-    @Value("${media.image.storage-path}")
-    private String storagePath;
-
+    private final ImageStorageService imageStorageService;
     private final ImageRepository imageRepo;
 
-    @Autowired
-    ImageServiceImpl(ImageRepository imageRepo) {
-        this.imageRepo = imageRepo;
-    }
+
+    private static final long MAX_FILE_SIZE = 100 * 1024 * 1024;
+    private static final List<String> ALLOWED_MIME_TYPES = List.of(
+            "image/jpeg", "image/png", "image/gif", "image/webp"
+    );
 
     @Override
-    @Transactional
     public String upload(MultipartFile file) {
 
+        validateImageFile(file);
+
+        Image image = Image.builder()
+                .size(file.getSize())
+                .mimeType(file.getContentType())
+                .created(Instant.now())
+                .build();
+
+        Image savedImage = imageRepo.save(image);
+
         try {
-            if (file.isEmpty()) {
-                throw new ImageException("File is empty");
-            }
 
-            String fileType = file.getContentType();
-
-            if (fileType != null && !file.getContentType().startsWith("image/")) {
-                throw new ImageException("File is not an image");
-            }
-
-            Image image = Image.builder()
-                    .size(file.getSize())
-                    .mimeType(fileType)
-                    .created(Instant.now())
-                    .build();
-
-            Image savedImage = imageRepo.save(image);
-
-            Path path = Paths.get(storagePath, savedImage.getId());
-
-            InputStream inputStream = file.getInputStream();
-
-            Files.copy(inputStream, path, StandardCopyOption.REPLACE_EXISTING);
-
-            return savedImage.getId();
+            imageStorageService.store(file.getInputStream(), savedImage.getId());
 
         } catch (IOException ex) {
 
-            throw new ImageException("Failed to upload image", ex);
+            log.atError().log("Could not store image");
+            throw new ImageException("Failed to store image file: " + savedImage.getId(), ex);
 
         }
+
+        return image.getId();
     }
 
     @Override
-    public ImageResponse findById(String imageId) {
+    public List<String> upload(List<MultipartFile> files) {
+
+        if (files.isEmpty()) {
+            throw new ImageException("Files array is empty");
+        }
+
+        List<String> uploadedIds = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+            uploadedIds.add(upload(file));
+        }
+
+        return uploadedIds;
+    }
+
+    @Override
+    public ImageResponse getImageResponseById(String imageId) {
 
         try {
 
-            Image image = imageRepo.findById(imageId).orElseThrow(
-                    () -> new ImageException("Image not found")
-            );
+            Image image = getImageById(imageId);
 
-            Path path = Paths.get(storagePath, imageId);
-
-            if (!Files.exists(path)) {
-                throw new ImageException("Image file doesn't exist");
-            }
-
-            Resource resource = new UrlResource(path.toUri());
-
-            if (!resource.exists() || !resource.isReadable()) {
-                throw new ImageException("Image file could not be read");
-            }
+            Resource resource = imageStorageService.load(imageId);
 
             return new ImageResponse(
                     image.getId(),
@@ -100,31 +89,68 @@ public class ImageServiceImpl implements ImageService {
                     image.getMimeType()
             );
 
-        } catch (Exception ex) {
-            throw new ImageException("Failed to find image", ex);
+        } catch (IOException ex) {
+            throw new ImageNotFoundException("Failed to find image", ex);
         }
     }
 
     @Override
     public void deleteById(String imageId) {
+
+        Image image = getImageById(imageId);
+
+        deleteImageWithFile(image);
+    }
+
+    @Override
+    public void deleteByIds(List<String> imageIds) {
+
+        List<Image> images = imageRepo.findByIdIn(imageIds);
+
+        if ((long) images.size() != imageIds.size()) {
+
+            List<String> missingImageIds = images.stream()
+                    .filter(imageId -> !images.contains(imageId))
+                    .map(Image::getId)
+                    .toList();
+
+            throw new ImageNotFoundException(String.format("Image ids does not match. Missing ids in database: %s", missingImageIds));
+        }
+
+        images.forEach(this::deleteImageWithFile);
+    }
+
+    private void deleteImageWithFile(Image image) {
         try {
 
-            Image image = imageRepo.findById(imageId).orElseThrow(
-                    () -> new ImageException("Image not found")
-            );
-
-            Path path = Paths.get(storagePath, imageId);
-
-            if (!Files.exists(path)) {
-                throw new ImageException("Image file doesn't exist");
-            }
+            imageStorageService.delete(image.getId());
 
             imageRepo.delete(image);
 
-            Files.delete(path);
+        } catch (IOException e) {
+            log.error("Failed to delete image file: {}", image.getId(), e);
+            throw new ImageException("Failed to delete image file", e);
+        }
+    }
 
-        } catch (Exception ex) {
-            throw new ImageException("Failed to delete image", ex);
+    private Image getImageById(String imageId) {
+        return imageRepo.findById(imageId).orElseThrow(
+                () -> new ImageNotFoundException("Image not found")
+        );
+    }
+
+    private void validateImageFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ImageValidationException("File cannot be empty");
+        }
+
+        String mimeType = file.getContentType();
+        if (mimeType == null || !ALLOWED_MIME_TYPES.contains(mimeType)) {
+            throw new ImageValidationException("File must be an image");
+        }
+
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new ImageValidationException("File size exceeds limit");
         }
     }
 }

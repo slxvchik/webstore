@@ -1,15 +1,16 @@
 spring:
+
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5433/media
     username: webstore
     password: webstore
 
-  jpa:
-    hibernate:
-      ddl-auto: update
-    database: postgresql
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    jpa:
+      hibernate:
+        ddl-auto: update
+      database: postgresql
+      database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 server:
   port: 8040
@@ -19,4 +20,4 @@ jwt:
 
 media:
   image:
-    storage-path: resources/static/storage/
+    storage-path: "C:/dev/pet_projects/webstore/services/media-service/src/main/resources/static/storage/"

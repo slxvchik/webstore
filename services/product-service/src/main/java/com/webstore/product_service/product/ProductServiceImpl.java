@@ -1,19 +1,15 @@
 package com.webstore.product_service.product;
 
-import com.webstore.product_service.catalog.dto.CatalogSearchCriteria;
 import com.webstore.product_service.category.Category;
 import com.webstore.product_service.category.CategoryRepository;
 import com.webstore.product_service.exception.ProductPurchaseException;
 import com.webstore.product_service.exception.ProductValidateException;
+import com.webstore.product_service.media.MediaClient;
 import com.webstore.product_service.product.dto.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -24,12 +20,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepo;
     private final CategoryRepository categoryRepo;
     private final ProductMapper productMapper;
+    private final MediaClient mediaClient;
 
     @Override
     public Long createProduct(ProductRequest productRequest) {
@@ -41,7 +38,24 @@ public class ProductServiceImpl implements ProductService {
         }
         Product product = productMapper.toProduct(productRequest, category);
         product.setCreated(LocalDateTime.now());
-        return productRepo.save(product).getId();
+
+        Product savedProduct = productRepo.save(product);
+
+        if (productRequest.thumbnail() != null) {
+            String thumbnailImageId = mediaClient.uploadImage(productRequest.thumbnail());
+            savedProduct.setThumbnailImageId(thumbnailImageId);
+        }
+
+        if (productRequest.gallery() != null) {
+            List<String> galleryImageIds = mediaClient.uploadImages(productRequest.gallery());
+            savedProduct.setGalleryImageIds(galleryImageIds);
+        }
+
+        if (productRequest.thumbnail() != null || productRequest.gallery() != null) {
+            productRepo.save(savedProduct);
+        }
+
+        return savedProduct.getId();
     }
 
     @Override
@@ -58,30 +72,46 @@ public class ProductServiceImpl implements ProductService {
         product.setPrice(request.price());
         product.setQuantity(request.quantity());
         product.setCategory(category);
+        
+        if (request.thumbnail() != null) {
+            mediaClient.deleteImage(product.getThumbnailImageId());
+            String thumbnailImageId = mediaClient.uploadImage(request.thumbnail());
+            product.setThumbnailImageId(thumbnailImageId);
+        }
+
+        if (request.gallery() != null) {
+            mediaClient.deleteImages(product.getGalleryImageIds());
+            List<String> galleryImageIds = mediaClient.uploadImages(request.gallery());
+            product.setGalleryImageIds(galleryImageIds);
+        }
 
         return productMapper.toProductResponse(productRepo.save(product));
     }
 
     @Override
     public void deleteProduct(Long id) {
-        if (!productRepo.existsById(id)) {
-            throw new EntityNotFoundException("Product with id: " + id + " not found.");
+
+        Product product = findProductById(id);
+
+        if (product.getThumbnailImageId() != null) {
+            mediaClient.deleteImage(product.getThumbnailImageId());
         }
+
+        if (product.getGalleryImageIds() != null) {
+            mediaClient.deleteImages(product.getGalleryImageIds());
+        }
+
         productRepo.deleteById(id);
     }
 
     @Override
-    public ProductShortResponse findProductShortById(Long id) {
-        return productRepo.findById(id)
-                .map(productMapper::toShortProductResponse)
-                .orElseThrow(() -> new EntityNotFoundException("Product with id: " + id + " not found."));
+    public ProductShortResponse getProductShortResponseById(Long id) {
+        return productMapper.toProductShortResponse(findProductById(id));
     }
 
     @Override
-    public ProductResponse findProductById(Long id) {
-        return productRepo.findById(id)
-                .map(productMapper::toProductResponse)
-                .orElseThrow(() -> new EntityNotFoundException("Product with id: " + id + " not found."));
+    public ProductResponse getProductResponseById(Long id) {
+        return productMapper.toProductResponse(findProductById(id));
     }
 
     @Override
@@ -145,17 +175,15 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductShortResponse> searchProducts(CatalogSearchCriteria catalogSearchCriteria, Pageable productPages) {
-        Specification<Product> spec = ProductSpecification.buildSpecification(catalogSearchCriteria);
-        Page<Product> products = productRepo.findAll(spec, productPages);
-        return products.map(productMapper::toShortProductResponse);
-    }
-
-    @Override
-    public List<ProductShortResponse> findProductShortByIds(List<Long> ids) {
+    public List<ProductShortResponse> getProductShortResponseByIds(List<Long> ids) {
         return productRepo.findAllByIdInWithLock(ids)
                 .stream()
-                .map(productMapper::toShortProductResponse)
+                .map(productMapper::toProductShortResponse)
                 .toList();
+    }
+
+    private Product findProductById(Long id) {
+        return productRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product with id: " + id + " not found."));
     }
 }

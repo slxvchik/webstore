@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -23,14 +24,14 @@ public class ProductController {
     public ResponseEntity<ProductShortResponse> showShortProduct(
             @PathVariable("product-id") Long productId
     ) {
-        return ResponseEntity.ok(productService.findProductShortById(productId));
+        return ResponseEntity.ok(productService.getProductShortResponseById(productId));
     }
 
     @GetMapping("/{product-id}")
     public ResponseEntity<ProductResponse> showProduct(
             @PathVariable("product-id") Long productId
     ) {
-        return ResponseEntity.ok(productService.findProductById(productId));
+        return ResponseEntity.ok(productService.getProductResponseById(productId));
     }
 
     /***
@@ -62,6 +63,8 @@ public class ProductController {
         return ResponseEntity.accepted().build();
     }
 
+
+
     /***
      * ==========================MICROSERVICE RIGHTS==========================
      */
@@ -71,7 +74,7 @@ public class ProductController {
     public ResponseEntity<List<ProductShortResponse>> showProducts(
             @RequestBody @Valid ProductBatchRequest request
     ) {
-        return ResponseEntity.ok(productService.findProductShortByIds(request.ids()));
+        return ResponseEntity.ok(productService.getProductShortResponseByIds(request.ids()));
     }
 
 //    @PreAuthorize("hasAnyAuthority('MICROSERVICE')")

@@ -48,7 +48,7 @@ public class CategoryController {
     public ResponseEntity<CategoryResponse> findCategory(
             @PathVariable("category-id") Long categoryId
     ) {
-        return ResponseEntity.ok(categoryService.findCategoryById(categoryId));
+        return ResponseEntity.ok(categoryService.getCategoryById(categoryId));
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")

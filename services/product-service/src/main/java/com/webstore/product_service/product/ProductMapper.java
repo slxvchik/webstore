@@ -2,13 +2,10 @@ package com.webstore.product_service.product;
 
 import com.webstore.product_service.category.Category;
 import com.webstore.product_service.category.CategoryMapper;
-import com.webstore.product_service.category.dto.CategoryResponse;
 import com.webstore.product_service.product.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 @Component
@@ -44,7 +41,7 @@ public class ProductMapper {
         );
     }
 
-    public ProductShortResponse toShortProductResponse(Product product) {
+    public ProductShortResponse toProductShortResponse(Product product) {
         return new ProductShortResponse(
                 product.getId(),
                 product.getName(),

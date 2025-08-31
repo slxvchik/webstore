@@ -61,11 +61,15 @@ spring:
           filters:
             - JwtAuthFilter
 
-
         - id: product-service-catalog
           uri: lb:http://PRODUCT-SERVICE
           predicates:
             - Path=/api/v1/catalog/**
+
+        - id: media-service
+          uri: lb:http://MEDIA-SERVICE
+          predicates:
+            - Path=/api/v1/media/**
 
 
 #        - id: payment-service

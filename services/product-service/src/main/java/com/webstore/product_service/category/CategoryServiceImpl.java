@@ -34,8 +34,7 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryMapper.toCategory(request);
 
         if (request.parentId() != null) {
-            Category parentCategory = categoryRepo.findById(request.parentId())
-                    .orElseThrow(() -> new EntityNotFoundException("Parent category not found"));
+            Category parentCategory = findCategoryById(request.parentId());
             category.setParentCategory(parentCategory);
             category.setDepth(parentCategory.getDepth() + 1);
         } else {
@@ -51,8 +50,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryResponse updateCategory(Long categoryId, CategoryRequest request) {
 
-        var category = categoryRepo.findById(categoryId)
-                .orElseThrow(() -> new EntityNotFoundException("Category " + categoryId + "not found"));
+        var category = findCategoryById(categoryId);
 
         validateCategoryRequestUniques(request, categoryId);
 
@@ -68,8 +66,8 @@ public class CategoryServiceImpl implements CategoryService {
             )
         ) {
 
-            var parentCategory = categoryRepo.findById(request.parentId())
-                .orElseThrow(() -> new EntityNotFoundException("Parent category not found"));
+            var parentCategory = findCategoryById(request.parentId());
+
             category.setParentCategory(parentCategory);
             category.setDepth(parentCategory.getDepth() + 1);
         } else if (category.getParentCategory() != null) {
@@ -91,32 +89,23 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void deleteCategory(Long categoryId) {
-        if (!categoryRepo.existsById(categoryId)) {
-            throw new EntityNotFoundException("Category with id: " + categoryId + "not found");
-        }
-        categoryRepo.deleteById(categoryId);
+        Category category = findCategoryById(categoryId);
+        categoryRepo.delete(category);
     }
 
     @Override
-    public CategoryResponse findCategoryById(Long categoryId) {
-        return categoryRepo.findById(categoryId)
-                .map(categoryMapper::toCategoryResponse)
-                .orElseThrow(
-                        () -> new EntityNotFoundException("Category with id: " + categoryId + "not found")
-                );
+    public CategoryResponse getCategoryById(Long categoryId) {
+        return categoryMapper.toCategoryResponse(findCategoryById(categoryId));
     }
 
     @Override
-    public Category findCategoryByUrlPath(String path) {
-        return categoryRepo.findCategoryByPath(convertUrlToCategoryPath(path))
-                .orElseThrow(
-                        () -> new EntityNotFoundException("Category with path: " + path + "not found")
-                );
-    }
-
-    @Override
-    public List<Category> findCategoryDescendants(String path) {
+    public List<Category> getCategoryDescendants(String path) {
         return categoryRepo.findCategoriesByPathStartingWith(convertUrlToCategoryPath(path));
+    }
+
+    private Category findCategoryById(Long categoryId) {
+        return categoryRepo.findById(categoryId)
+                .orElseThrow(() -> new EntityNotFoundException("Category with id: " + categoryId + "not found"));
     }
 
     private List<CategoryResponse> buildCategoryTree(List<Category> categories) {

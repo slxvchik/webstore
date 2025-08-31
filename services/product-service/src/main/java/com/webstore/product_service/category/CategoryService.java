@@ -10,7 +10,6 @@ public interface CategoryService {
     Long createCategory(CategoryRequest request);
     CategoryResponse updateCategory(Long id, CategoryRequest request);
     void deleteCategory(Long id);
-    CategoryResponse findCategoryById(Long categoryId);
-    Category findCategoryByUrlPath(String path);
-    List<Category> findCategoryDescendants(String path);
+    CategoryResponse getCategoryById(Long categoryId);
+    List<Category> getCategoryDescendants(String path);
 }

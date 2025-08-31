@@ -2,7 +2,6 @@ package com.webstore.product_service.catalog;
 
 import com.webstore.product_service.category.Category;
 import com.webstore.product_service.category.CategoryService;
-import com.webstore.product_service.product.ProductService;
 import com.webstore.product_service.catalog.dto.CatalogSearchCriteria;
 import com.webstore.product_service.catalog.dto.CatalogSearchRequest;
 import com.webstore.product_service.product.dto.ProductShortResponse;
@@ -26,7 +25,7 @@ import java.util.List;
 @AllArgsConstructor
 public class CatalogController {
 
-    private final ProductService productService;
+    private final CatalogService catalogService;
     private final CategoryService categoryService;
 
     @GetMapping("{*categoryPath}")
@@ -42,7 +41,7 @@ public class CatalogController {
             throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "minPrice cannot be greater than maxPrice");
         }
 
-        List<Long> categoryIds = categoryService.findCategoryDescendants(categoryPath).stream()
+        List<Long> categoryIds = categoryService.getCategoryDescendants(categoryPath).stream()
                 .map(Category::getId)
                 .toList();
 
@@ -54,6 +53,6 @@ public class CatalogController {
                 .maxPrice(catalogSearchRequest.maxPrice())
                 .build();
 
-        return ResponseEntity.ok(productService.searchProducts(catalogSearchCriteria, pageable));
+        return ResponseEntity.ok(catalogService.searchProducts(catalogSearchCriteria, pageable));
     }
 }

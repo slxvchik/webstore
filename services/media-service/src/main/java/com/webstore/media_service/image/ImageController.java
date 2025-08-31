@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/images")
 @AllArgsConstructor
@@ -27,12 +29,35 @@ public class ImageController {
             @PathVariable("image-id") String imageId
     ) {
 
-        ImageResponse image = imageService.findById(imageId);
+        ImageResponse image = imageService.getImageResponseById(imageId);
 
         return ResponseEntity.ok()
                 .contentType(MediaType.valueOf(image.mimeType()))
                 .contentLength(image.size())
                 .body(image.content());
+    }
+
+    @DeleteMapping("/{image-id}")
+    public ResponseEntity<Void> deleteImage(
+            @PathVariable("image-id") String imageId
+    ) {
+        imageService.deleteById(imageId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<List<String>> batchImages(
+            @RequestParam("files") List<MultipartFile> files
+    ) {
+        return ResponseEntity.ok(imageService.upload(files));
+    }
+
+    @DeleteMapping("/batch")
+    public ResponseEntity<Void> batchDeleteImages(
+            @RequestParam("imageIds") List<String> imageIds
+    ) {
+        imageService.deleteByIds(imageIds);
+        return ResponseEntity.ok().build();
     }
 
 }
