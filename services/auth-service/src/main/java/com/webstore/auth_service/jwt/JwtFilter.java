@@ -49,7 +49,7 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (jwtBlacklistService.isTokenBlacklisted(refreshTokenStr) || jwtBlacklistService.isTokenBlacklisted(accessTokenStr)) {
+        if (jwtBlacklistService.isTokenBlacklisted(refreshTokenStr) || accessTokenStr != null && jwtBlacklistService.isTokenBlacklisted(accessTokenStr)) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "The access or refresh token in blacklist");
             return;
         }

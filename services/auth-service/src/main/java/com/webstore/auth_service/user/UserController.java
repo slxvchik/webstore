@@ -13,7 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,8 +56,7 @@ public class UserController {
     ) {
         userService.deleteUser(user.getId());
 
-        jwtBlacklistService.addToBlacklist(servletUtil.getAccessTokenFromHeader(request));
-        jwtBlacklistService.addToBlacklist(servletUtil.getRefreshTokenFromCookie(request));
+        jwtBlacklistService.addTokensToBlackList(servletUtil.getAccessTokenFromHeader(request), servletUtil.getRefreshTokenFromCookie(request));
 
         response.addCookie(cookieJwtManager.createExpiredRefreshTokenCookie());
 

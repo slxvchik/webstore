@@ -9,7 +9,6 @@ import com.webstore.auth_service.user.Role;
 import com.webstore.auth_service.user.User;
 import com.webstore.auth_service.jwt.JwtUtils;
 import com.webstore.auth_service.user.UserRepository;
-import jakarta.servlet.http.Cookie;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -80,10 +79,10 @@ public class AuthService {
 
     public void logout(String accessToken, String refreshToken) {
         if (accessToken != null) {
-            jwtBlacklistService.addToBlacklist(accessToken);
+            jwtBlacklistService.addTokenToBlacklist(accessToken);
         }
         if (refreshToken != null) {
-            jwtBlacklistService.addToBlacklist(refreshToken);
+            jwtBlacklistService.addTokenToBlacklist(refreshToken);
         }
     }
 

@@ -29,7 +29,7 @@ public class JwtBlacklistService {
         return blacklistRepository.existsByJwtIdAndUserId(jwtId, userId);
     }
 
-    public void addToBlacklist(String token) {
+    public void addTokenToBlacklist(String token) {
         Optional<ParsedToken> parsedToken = jwtUtils.extractAllClaims(token);
 
         if (parsedToken.isEmpty() || isTokenBlacklisted(token)) {
@@ -44,6 +44,11 @@ public class JwtBlacklistService {
         blacklistedToken.setExpiresAt(claims.getExpiration().toInstant());
 
         blacklistRepository.save(blacklistedToken);
+    }
+
+    public void addTokensToBlackList(String accessToken, String refreshToken) {
+        addTokenToBlacklist(accessToken);
+        addTokenToBlacklist(refreshToken);
     }
 
     @Scheduled(cron = "0 0 3 * * ?") // Очистка каждый день в 3:00

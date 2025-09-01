@@ -1,10 +1,10 @@
 package com.webstore.auth_service.user.deleted;
 
-import com.webstore.auth_service.jwt.JwtUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Instant;
 
@@ -12,13 +12,14 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class DeletedUserService {
     private final DeletedUserRepository deletedUserRepository;
-    private final JwtUtils jwtUtils;
+    @Value("${jwt.refreshExpiration}")
+    private int REFRESH_EXPIRATION;
 
     public void markUserAsDeleted(String userId) {
         DeletedUser deletedUser = new DeletedUser();
         deletedUser.setUserId(userId);
         deletedUser.setDeletedAt(Instant.now());
-        deletedUser.setExpiresAt(Instant.now().plusSeconds(jwtUtils.getREFRESH_EXPIRATION()));
+        deletedUser.setExpiresAt(Instant.now().plusSeconds(REFRESH_EXPIRATION));
 
         deletedUserRepository.save(deletedUser);
     }
