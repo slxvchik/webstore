@@ -1,7 +1,9 @@
-package com.webstore.auth_service.config.jwt;
+package com.webstore.auth_service.jwt;
 
+import com.webstore.auth_service.jwt.blacklist.JwtBlacklistService;
 import com.webstore.auth_service.user.User;
 import com.webstore.auth_service.user.UserDetailService;
+import com.webstore.auth_service.user.deleted.DeletedUserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -19,12 +21,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@AllArgsConstructor
 @Slf4j
+@AllArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
     private JwtUtils jwtUtils;
     private UserDetailService userDetailService;
+    private JwtBlacklistService jwtBlacklistService;
+    private final DeletedUserService deletedUserService;
 
     @Override
     protected void doFilterInternal(
@@ -42,6 +46,11 @@ public class JwtFilter extends OncePerRequestFilter {
         if (refreshTokenStr == null) {
             SecurityContextHolder.clearContext();
             filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (jwtBlacklistService.isTokenBlacklisted(refreshTokenStr) || jwtBlacklistService.isTokenBlacklisted(accessTokenStr)) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "The access or refresh token in blacklist");
             return;
         }
 
@@ -67,6 +76,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
                 User user = accessToken.getUser();
 
+                if (deletedUserService.isUserDeleted(user.getId())) {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "User account deleted");
+                    return;
+                }
+
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                         user,
                         null,
@@ -78,6 +92,11 @@ public class JwtFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
                 return;
             }
+        }
+
+        if (deletedUserService.isUserDeleted(refreshToken.getUserId())) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "User account deleted");
+            return;
         }
 
         // else if access token is invalid, but refresh token is valid

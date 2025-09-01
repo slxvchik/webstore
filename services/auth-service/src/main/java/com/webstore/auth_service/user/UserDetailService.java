@@ -15,9 +15,9 @@ public class UserDetailService implements UserDetailsService {
 
     @Override
     @Transactional
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Username does not exist, please try again: " + username));
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Email does not exist, please try again: " + email));
     }
 
     @Transactional
@@ -30,12 +30,6 @@ public class UserDetailService implements UserDetailsService {
     public UserDetails loadUserByEmail(String email) throws UsernameNotFoundException {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Email does not exist, please try again: " + email));
-    }
-
-    @Transactional
-    public UserDetails loadUserByPhone(String phone) throws UsernameNotFoundException {
-        return userRepository.findByPhone(phone)
-                .orElseThrow(() -> new UsernameNotFoundException("Phone does not exist, please try again: " + phone));
     }
 
 }

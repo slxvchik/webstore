@@ -6,7 +6,10 @@ import com.webstore.auth_service.auth.dto.TokensResponse;
 import com.webstore.auth_service.user.User;
 import com.webstore.auth_service.user.UserService;
 import com.webstore.auth_service.user.dto.UserResponse;
+import com.webstore.auth_service.utils.CookieJwtManager;
+import com.webstore.auth_service.utils.ServletUtil;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -16,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.CookieManager;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @AllArgsConstructor
@@ -23,7 +28,8 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-    private final UserService userService;
+    private final ServletUtil servletUtil;
+    private final CookieJwtManager cookieJwtManager;
 
     @PostMapping("/register")
     public ResponseEntity<String> register(
@@ -39,7 +45,7 @@ public class AuthController {
 
         TokensResponse tokens = authService.login(loginRequest);
 
-        Cookie refreshToken = authService.createCookieRefreshToken(tokens.refreshToken());
+        Cookie refreshToken = cookieJwtManager.createRefreshTokenCookie(tokens.refreshToken());
 
         response.addCookie(refreshToken);
 
@@ -47,21 +53,17 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<TokensResponse> logout(
-            @AuthenticationPrincipal User user
+    public ResponseEntity<Void> logout(
+            @AuthenticationPrincipal User user,
+            HttpServletRequest request,
+            HttpServletResponse response
     ) {
-        return null;
-    }
+        authService.logout(servletUtil.getAccessTokenFromHeader(request), servletUtil.getRefreshTokenFromCookie(request));
 
-//    @GetMapping
-//    public ResponseEntity<UserResponse> getAuthenticatedUser(
-//            @AuthenticationPrincipal User user
-//    ) {
-//        if (user == null) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//        }
-//        return ResponseEntity.ok(userService.findUser(user.getId()));
-//    }
+        response.addCookie(cookieJwtManager.createExpiredRefreshTokenCookie());
+
+        return ResponseEntity.ok().build();
+    }
 
     @PostMapping("/token-verify")
     public ResponseEntity<Void> validateToken(

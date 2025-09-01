@@ -8,7 +8,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
@@ -46,4 +46,6 @@ application:
     product-url: http://localhost:8020/api/v1/products
 
 jwt:
-  secret: gqi0TQmTCBWt9273UBrDBfKRjy57Y9UABNWAwtv5hocrGiSzI6fHqz7dfYelhhUKyoiAaYj/S8Csp2hQf2ugBQ==
+  publicKey: "-----BEGIN PUBLIC KEY-----
+  MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCURx9qlEbwA1WCkqGLBb3XsPLG59XKed0FzUSVhWA5BTyoepbJDPl95gnrElnPqKB0QeCDSQPm1k6zeOUdC6qmZ+dywIJ50jM1Mc0r19VlCPnXsL6q9dpo/dzYMfaZicckpWJrZP9VWUfOu0BGwWYjayhuiKwrl7ZHF/J48did1wIDAQAB
+  -----END PUBLIC KEY-----"

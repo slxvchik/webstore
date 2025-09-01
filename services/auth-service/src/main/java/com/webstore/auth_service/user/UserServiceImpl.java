@@ -2,14 +2,14 @@ package com.webstore.auth_service.user;
 
 import com.webstore.auth_service.exception.UserNotFoundException;
 import com.webstore.auth_service.exception.UserValidateException;
+import com.webstore.auth_service.user.deleted.DeletedUserService;
 import com.webstore.auth_service.user.dto.*;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang.StringUtils;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,24 +20,25 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepo;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final DeletedUserService deletedUserService;
 
     @Override
-    public void updateUser(UserRequest request) {
-        User user = userRepo.findById(request.id())
-                .orElseThrow(() -> new UserNotFoundException("User with id " + request.id() + " not found."));
+    public void updateUser(String userId, UserRequest request) {
+        User user = findUserById(userId);
+
         validateUserUniques(userMapper.toUser(request));
-        user.setUsername(request.username());
+
+        user.setFirstName(request.firstName());
+        user.setSecondName(request.secondName());
         user.setEmail(request.email());
         user.setPhone(request.phone());
-        if (StringUtils.isNotBlank(request.fullname())) {
-            user.setFullname(request.fullname());
-        }
+
         userRepo.save(user);
     }
 
     @Override
-    public List<UserResponse> findAllUsers() {
-        return userRepo.findAll()
+    public List<UserResponse> findAllUsers(Pageable pageable) {
+        return userRepo.findAll(pageable)
                 .stream()
                 .map(userMapper::toUserResponse)
                 .collect(Collectors.toList());
@@ -45,37 +46,33 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse findUser(String userId) {
-        return userRepo.findById(userId)
-                .map(userMapper::toUserResponse)
-                .orElseThrow(
-                () -> new UserNotFoundException("User with id " + userId + " not found.")
-        );
+        return userMapper.toUserResponse(findUserById(userId));
     }
 
     @Override
     public void deleteUser(String userId) {
         if (!userRepo.existsById(userId)) {
-            throw new UserNotFoundException("Category " + userId + "not found");
+            throw new UserNotFoundException("User " + userId + "not found");
         }
+
         userRepo.deleteById(userId);
+
+        deletedUserService.markUserAsDeleted(userId);
     }
 
     @Override
     public void updateAuthUser(String userId, UpdateUserRequest request) {
-        User user = userRepo.findById(userId).orElseThrow(() ->
-                new UserNotFoundException("User with id " + userId + " not found.")
-        );
+        User user = findUserById(userId);
 
-        user.setFullname(request.fullname());
+        user.setFirstName(request.firstName());
+        user.setSecondName(request.secondName());
 
         userRepo.save(user);
     }
 
     @Override
     public void updatePassword(String userId, UpdatePasswordRequest request) {
-        User user = userRepo.findById(userId).orElseThrow(() ->
-                new UserNotFoundException("User with id " + userId + " not found")
-        );
+        User user = findUserById(userId);
         if (!passwordEncoder.matches(user.getPassword(), request.oldPassword())) {
             throw new UserValidateException("Old password does not match");
         }
@@ -84,20 +81,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateUsername(String userId, UpdateUsernameRequest request) {
-        User user = userRepo.findById(userId)
-                .orElseThrow(()-> new UserNotFoundException("User with id " + userId + " not found"));
-        if (!passwordEncoder.matches(user.getPassword(), request.password())) {
-            throw new UserValidateException("Password does not match");
-        }
-        user.setUsername(request.newUsername());
-        userRepo.save(user);
-    }
-
-    @Override
     public void updateEmail(String userId, UpdateEmailRequest request) {
-        User user = userRepo.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User with id " + userId + " not found"));
+        User user = findUserById(userId);
         if (!passwordEncoder.matches(user.getPassword(), request.password())) {
             throw new UserValidateException("Password does not match");
         }
@@ -133,11 +118,10 @@ public class UserServiceImpl implements UserService {
     public String createUser(UserRequest request) {
 
         User user = User.builder()
-                .id(request.id())
-                .username(request.username())
+                .firstName(request.firstName())
+                .secondName(request.secondName())
                 .email(request.email())
-                .fullname(request.fullname())
-                .password(request.password())
+                .password(passwordEncoder.encode(request.password()))
                 .phone(request.phone())
                 .roles(request.roles())
                 .build();
@@ -149,9 +133,6 @@ public class UserServiceImpl implements UserService {
 
     private void validateUserUniques(User user) {
         List<String> errors = new ArrayList<>();
-        if (userRepo.existsByUsername(user.getUsername())) {
-            errors.add("The username " + user.getUsername() + " already exists.");
-        }
         if (userRepo.existsByEmail(user.getEmail())) {
             errors.add("The email " + user.getEmail() + " already exists.");
         }
@@ -161,5 +142,10 @@ public class UserServiceImpl implements UserService {
         if (!errors.isEmpty()) {
             throw new UserValidateException("User creation failed: " + String.join(" ", errors));
         }
+    }
+
+    private User findUserById(String userId) {
+        return userRepo.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User with id " + userId + " not found."));
     }
 }

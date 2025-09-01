@@ -1,9 +1,16 @@
 package com.webstore.auth_service.user;
 
+import com.webstore.auth_service.jwt.blacklist.JwtBlacklistService;
 import com.webstore.auth_service.user.dto.*;
+import com.webstore.auth_service.utils.CookieJwtManager;
+import com.webstore.auth_service.utils.ServletUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -19,6 +26,9 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final ServletUtil servletUtil;
+    private final JwtBlacklistService jwtBlacklistService;
+    private final CookieJwtManager cookieJwtManager;
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
     @GetMapping("/me")
@@ -31,7 +41,7 @@ public class UserController {
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
     @PutMapping("/me")
     public ResponseEntity<Void> updateAuthUser(
-            @RequestBody @Valid UpdateUserRequest request,
+            @RequestBody UpdateUserRequest request,
             @AuthenticationPrincipal User user
     ) {
         userService.updateAuthUser(user.getId(), request);
@@ -41,9 +51,17 @@ public class UserController {
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteAuthUser(
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal User user,
+            HttpServletRequest request,
+            HttpServletResponse response
     ) {
         userService.deleteUser(user.getId());
+
+        jwtBlacklistService.addToBlacklist(servletUtil.getAccessTokenFromHeader(request));
+        jwtBlacklistService.addToBlacklist(servletUtil.getRefreshTokenFromCookie(request));
+
+        response.addCookie(cookieJwtManager.createExpiredRefreshTokenCookie());
+
         return ResponseEntity.ok().build();
     }
 
@@ -64,16 +82,6 @@ public class UserController {
             @AuthenticationPrincipal User user
     ) {
         userService.updateEmail(user.getId(), request);
-        return ResponseEntity.ok().build();
-    }
-
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER', 'USER')")
-    @PatchMapping("/me/username")
-    public ResponseEntity<Void> updateAuthUserUsername(
-            @RequestBody @Valid UpdateUsernameRequest request,
-            @AuthenticationPrincipal User user
-    ) {
-        userService.updateUsername(user.getId(), request);
         return ResponseEntity.ok().build();
     }
 
@@ -100,8 +108,18 @@ public class UserController {
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getUsers() {
-        return ResponseEntity.ok(userService.findAllUsers());
+    public ResponseEntity<List<UserResponse>> getUsers(
+            @PageableDefault Pageable pageable
+    ) {
+        return ResponseEntity.ok(userService.findAllUsers(pageable));
+    }
+
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
+    @PostMapping
+    public ResponseEntity<String> createUser(
+            @RequestBody @Valid UserRequest request
+    ) {
+        return ResponseEntity.accepted().body(userService.createUser(request));
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PRODUCT_MANAGER')")
@@ -113,19 +131,12 @@ public class UserController {
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN')")
-    @PostMapping
-    public ResponseEntity<String> createUser(
-            @RequestBody @Valid UserRequest request
-    ) {
-        return ResponseEntity.accepted().body(userService.createUser(request));
-    }
-
-    @PreAuthorize("hasAnyAuthority('ADMIN')")
-    @PutMapping
+    @PutMapping("/{user-id}")
     public ResponseEntity<Void> updateUser(
-            @RequestBody @Valid UserRequest request
+            @RequestBody UserRequest request,
+            @PathVariable("user-id") String userId
     ) {
-        userService.updateUser(request);
+        userService.updateUser(userId, request);
         return ResponseEntity.accepted().build();
     }
 

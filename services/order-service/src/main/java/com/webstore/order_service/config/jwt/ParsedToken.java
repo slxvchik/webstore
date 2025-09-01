@@ -15,7 +15,7 @@ public class ParsedToken {
         this.claims = claims;
     }
 
-    public String getUsername() {
+    public String getEmail() {
         return claims.getSubject();
     }
 

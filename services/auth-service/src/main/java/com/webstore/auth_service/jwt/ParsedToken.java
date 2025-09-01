@@ -1,12 +1,10 @@
-package com.webstore.auth_service.config.jwt;
+package com.webstore.auth_service.jwt;
 
 import com.webstore.auth_service.user.Role;
 import com.webstore.auth_service.user.User;
 import io.jsonwebtoken.Claims;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ParsedToken {
@@ -20,6 +18,10 @@ public class ParsedToken {
         return claims.get("userId", String.class);
     }
 
+    public String getTokenId() {
+        return claims.getId();
+    }
+
     public User getUser() {
 
         List<String> userRolesList = claims.get("authorities", ArrayList.class);
@@ -30,8 +32,11 @@ public class ParsedToken {
 
         return User.builder()
                 .id(claims.get("userId", String.class))
-                .username(claims.get("username", String.class))
                 .roles(userRoles)
                 .build();
+    }
+
+    public Date getExpiration() {
+        return claims.getExpiration();
     }
 }

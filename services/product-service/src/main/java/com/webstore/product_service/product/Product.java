@@ -25,16 +25,13 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @NotBlank(message = "Name must not be blank")
-    @Size(min = 3, max = 500, message = "Name must be between 3 and 500 characters")
     @Column(nullable = false, unique = true)
     private String name;
+    @Column
     private String description;
     @Column(nullable = false)
-    @Positive
     private BigDecimal price;
     @Column(nullable = false)
-    @PositiveOrZero
     private Integer quantity;
 
     @Column(name = "thumbnail_image_id")
@@ -51,10 +48,8 @@ public class Product {
     private LocalDateTime created;
 
     //aggregated data
-    @PositiveOrZero
     private Float rating;
     @Column(name = "reviews_count")
-    @PositiveOrZero
     private Integer reviewsCount;
 
     @ManyToOne(fetch = FetchType.LAZY)

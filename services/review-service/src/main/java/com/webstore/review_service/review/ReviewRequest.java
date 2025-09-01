@@ -8,7 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public record ReviewRequest(
-        String id,
         @NotBlank
         String productId,
         @NotBlank

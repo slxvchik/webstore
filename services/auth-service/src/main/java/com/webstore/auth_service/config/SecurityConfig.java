@@ -1,9 +1,10 @@
 package com.webstore.auth_service.config;
 
-import ch.qos.logback.core.joran.spi.HttpUtil;
-import com.webstore.auth_service.config.jwt.JwtFilter;
-import com.webstore.auth_service.config.jwt.JwtUtils;
+import com.webstore.auth_service.jwt.JwtFilter;
+import com.webstore.auth_service.jwt.JwtUtils;
+import com.webstore.auth_service.jwt.blacklist.JwtBlacklistService;
 import com.webstore.auth_service.user.UserDetailService;
+import com.webstore.auth_service.user.deleted.DeletedUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,7 +13,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -24,11 +24,15 @@ public class SecurityConfig {
 
     private final JwtUtils jwtUtils;
     private final UserDetailService userDetailService;
+    private final JwtBlacklistService jwtBlacklistService;
+    private final DeletedUserService deletedUserService;
 
     @Autowired
-    public SecurityConfig(JwtUtils jwtUtils, UserDetailService userDetailService) {
+    public SecurityConfig(JwtUtils jwtUtils, UserDetailService userDetailService, JwtBlacklistService jwtBlacklistService, DeletedUserService deletedUserService) {
         this.jwtUtils = jwtUtils;
         this.userDetailService = userDetailService;
+        this.jwtBlacklistService = jwtBlacklistService;
+        this.deletedUserService = deletedUserService;
     }
 
     @Bean
@@ -46,7 +50,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .rememberMe(AbstractHttpConfigurer::disable)
-                .addFilterBefore(new JwtFilter(jwtUtils, userDetailService), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtFilter(jwtUtils, userDetailService, jwtBlacklistService, deletedUserService), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 

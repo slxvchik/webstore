@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -62,22 +63,45 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public ReviewResponse updateReview(String reviewId, ReviewRequest reviewRequest) {
-        return null;
+        Review review = findReviewById(reviewId);
+        review.setRating(reviewRequest.rating());
+        review.setText(reviewRequest.text());
+        if (reviewRequest.attachmentImages() != null) {
+            if (review.getAttachedImages() != null) {
+                mediaClient.deleteImages(review.getAttachedImages());
+            }
+            List<String> images = mediaClient.uploadImages(reviewRequest.attachmentImages());
+            review.setAttachedImages(images);
+        }
+        Review savedReview = reviewRepo.save(review);
+
+        return reviewMapper.toReviewResponse(savedReview);
     }
 
     @Override
     public void deleteReview(String reviewId) {
-
+        Review review = findReviewById(reviewId);
+        if (review.getAttachedImages() != null) {
+            mediaClient.deleteImages(review.getAttachedImages());
+        }
+        reviewRepo.delete(review);
     }
 
     @Override
     public List<ReviewResponse> getReviewsByProductId(String productId, Pageable pageable) {
-        return List.of();
+        List<Review> review = reviewRepo.findByUserId(productId, pageable);
+        return review.stream().map(reviewMapper::toReviewResponse).toList();
     }
 
     private Review findReviewByProductAndUser(String productId, String userId) {
         return reviewRepo.findByProductIdAndUserId(productId, userId).orElseThrow(
                 () -> new ReviewNotFoundException("Review not found for productId: " + productId + ", userId: " + userId)
+        );
+    }
+
+    private Review findReviewById(String reviewId) {
+        return reviewRepo.findById(reviewId).orElseThrow(
+                () -> new ReviewNotFoundException("Review not found for id: " + reviewId)
         );
     }
 
